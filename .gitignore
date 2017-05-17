@@ -24,4 +24,4 @@
 .DS_Store?
 
 #database files
-.sqlite
+*.sqlite
