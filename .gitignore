@@ -1,0 +1,27 @@
+#setuptools distribution folders
+/build
+/dist
+
+#python metadata 
+/*.egg
+/*.egg-info
+
+#compiled python modules/cython precompiled
+*.pyc
+*.so
+*.pyd
+*.c
+
+
+#temporary files
+*~
+
+#Ipython check points
+/.ipynb_checkpoints
+
+#mac files
+.DS_Store
+.DS_Store?
+
+#database files
+.sqlite
