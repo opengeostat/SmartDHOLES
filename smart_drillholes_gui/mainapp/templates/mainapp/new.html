@@ -1,0 +1,20 @@
+{% extends 'mainapp/base.html' %}
+{% block content %}
+<div class="col-md-6 col-md-offset-3">
+  <form method="POST" action="{% url 'mainapp:new' %}">
+    {% csrf_token %}
+    <div class="form-group">
+      {{ form.db_type.label_tag }}
+      {{ form.db_type }}
+    </div>
+    <div class="form-group">
+      {{ form.name.label_tag }}
+      {{ form.name }}
+    </div>
+    <div class="text-right">
+      <a href="{% url 'mainapp:index' %}" class="btn btn-danger">Cancel</a>
+      <button type="submit" class="btn btn-success">Submit</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

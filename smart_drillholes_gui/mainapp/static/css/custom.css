@@ -1,0 +1,124 @@
+/*gr-sidebar styles*/
+nav.gr-sidebar{
+    padding: 1px;
+    margin-top: -21px
+}
+nav.gr-sidebar .nav.navbar-nav{
+    width:100%
+}
+nav.gr-sidebar, .main {
+    -webkit-transition: margin 200ms ease-out;
+    -moz-transition: margin 200ms ease-out;
+    -o-transition: margin 200ms ease-out;
+    transition: margin 200ms ease-out;
+}
+
+.main {
+    padding: 10px 10px 0 10px;
+}
+
+.main {
+    position: absolute;
+    width: calc(100% - 40px);
+    margin-left: 40px;
+    float: right;
+}
+
+nav.gr-sidebar:hover+.main {
+    margin-left: 200px;
+}
+
+nav.gr-sidebar.navbar.gr-sidebar>.container .navbar-brand, .navbar>.container-fluid .navbar-brand {
+    margin-left: 0;
+}
+
+nav.gr-sidebar .navbar-brand, nav.gr-sidebar .navbar-header {
+    text-align: center;
+    width: 100%;
+    margin-left: 0;
+}
+
+nav.gr-sidebar a {
+    padding-right: 13;
+}
+
+/*nav.gr-sidebar .navbar-nav>li:first-child {
+    border-top: 1px #e5e5e5 solid;
+}*/
+
+/*nav.gr-sidebar .navbar-nav>li {
+    border-bottom: 1px #e5e5e5 solid;
+}*/
+
+nav.gr-sidebar .navbar-nav .open .dropdown-menu {
+    position: static;
+    float: none;
+    width: auto;
+    margin-top: 0;
+    background-color: rgba(255,255,255,0.1);
+    border: 0;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
+
+nav.gr-sidebar .navbar-collapse, nav.gr-sidebar .container-fluid {
+    padding: 0 0px 0 0px;
+}
+
+.navbar-inverse .navbar-nav .open .dropdown-menu>li>a {
+    color: #777;
+}
+
+nav.gr-sidebar.collapse,nav.gr-sidebar.collapsing {
+    width: 200px;
+    height: calc(100% - 45px)!important;
+    /*float: left;*/
+    position:absolute;
+    left:0;
+    margin-bottom: 0;
+    z-index: 1029
+}
+
+nav.gr-sidebar li {
+    width: 100%;
+}
+
+nav.gr-sidebar:hover {
+    margin-left: 0px;
+}
+
+.forAnimate {
+    opacity: 0;
+}
+
+@media (min-width: 1330px) {
+    .main {
+        width: calc(100% - 200px);
+        margin-left: 200px;
+    }
+    nav.gr-sidebar {
+        margin-left: 0;
+        float: left;
+    }
+    nav.gr-sidebar .forAnimate {
+        opacity: 1;
+    }
+}
+
+nav.gr-sidebar .navbar-nav .open .dropdown-menu>li>a:hover, nav.gr-sidebar .navbar-nav .open .dropdown-menu>li>a:focus {
+    color: #CCC;
+    background-color: transparent;
+}
+
+nav:hover .forAnimate {
+    opacity: 1;
+}
+
+section {
+    padding-left: 15px;
+}
+
+.nav.navbar-nav .dropdown-menu > li > a{
+    padding-left: 30px
+}
+/* gr-sidebar syles end */

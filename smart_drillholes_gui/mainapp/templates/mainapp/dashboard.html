@@ -1,0 +1,12 @@
+{% extends "mainapp/base.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+{% include "mainapp/left_panel.html" %}
+<div style="width: calc(100% - 200px);margin-left:200px">
+<ol class="breadcrumb">
+  <li><b>{{ request.COOKIES.db }}</b></li>
+</ol>
+</div>
+{% endblock %}
