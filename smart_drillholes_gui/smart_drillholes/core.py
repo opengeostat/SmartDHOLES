@@ -1,4 +1,5 @@
 import sqlalchemy
+
 from sqlalchemy import (create_engine,
                         Table,
                         Column,
@@ -103,7 +104,4 @@ def execute(eng, meta):
     meta.create_all(eng)
 
 
-# con_string= 'sqlite:///test2.sqlite'
-con_string = 'postgresql://postgres@localhost/Dhole'
 
-eng, meta = og_connect(con_string, overwrite=False)
