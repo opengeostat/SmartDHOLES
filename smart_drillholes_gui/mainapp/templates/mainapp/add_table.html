@@ -1,0 +1,43 @@
+{% extends "mainapp/dashboard.html" %}
+{% load static %}
+{% block title %}Add new table{% endblock %}
+
+{% block dashboard_content %}
+
+<div class="col-md-6 col-md-offset-3">
+  <form method="POST" action="{% url 'mainapp:add_table' %}">
+    {% csrf_token %}
+    <div class="form-group">
+      {{ form.table_type.label_tag }}
+      {{ form.table_type }}
+    </div>
+    <div class="form-group" style="display:none" id="foreignkey_form_group">
+      {{ form.foreignkey.label_tag }}
+      {{ form.foreignkey }}
+    </div>
+    <div class="form-group">
+      {{ form.name.label_tag }}
+      {{ form.name }}
+    </div>
+    <div class="text-right">
+      <a href="{% url 'mainapp:index' %}" class="btn btn-danger">Cancel</a>
+      <button type="submit" class="btn btn-success">Submit</button>
+    </div>
+  </form>
+  <script>
+  $(document).ready(function(){
+    $('#id_table_type').on('change', function() {
+      if ( this.value == 'assay' || this.value == 'litho')
+      {
+        $("#foreignkey_form_group").show();
+      }
+      else
+      {
+        $("#foreignkey_form_group").hide();
+      }
+    });
+});
+  </script>
+</div>
+
+{% endblock %}
