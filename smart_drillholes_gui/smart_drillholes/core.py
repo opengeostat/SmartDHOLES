@@ -60,8 +60,8 @@ def og_connect(con_string='sqlite:///test2.sqlite', echo=False):
     if dbtype == 'postg':
         eng = create_engine(con_string, echo=echo)
 
-    if dbtype == 'sqlite':
-        pass
+    # if dbtype == 'sqlite':
+    #     pass
 
     # create collar table
     meta = MetaData()
@@ -126,10 +126,10 @@ def og_create_dhdef(eng, meta, dbsuffix="", collar_cols={}, survey_cols={}):
 
     """
 
-    assert dbsuffix+'_collar' not in eng.table_names(), 'Collar table: {} already in database'.format(dbsuffix+'_collar')
-    assert dbsuffix+'_survey' not in eng.table_names(), 'Surbey table: {} already in database'.format(dbsuffix+'_survey')
+    assert 'collar' not in eng.table_names(), 'Collar table: {} already in database'.format('collar')
+    assert 'survey' not in eng.table_names(), 'Surbey table: {} already in database'.format('survey')
 
-    collar = Table(dbsuffix+'_collar', meta,
+    collar = Table('collar', meta,
                    Column('BHID', String, primary_key=True),
                    Column('xcollar', Float, nullable=False),
                    Column('ycollar', Float, nullable=False),
@@ -137,7 +137,7 @@ def og_create_dhdef(eng, meta, dbsuffix="", collar_cols={}, survey_cols={}):
                    Column('LENGTH', Float, nullable=False),
                    Column('Comments', String))
 
-    survey = Table(dbsuffix+'_survey', meta,
+    survey = Table('survey', meta,
                    Column('BHID', None,
                           ForeignKey(column=dbsuffix+'_collar.BHID',
                                      ondelete='CASCADE',
@@ -172,7 +172,7 @@ def og_create_dhdef(eng, meta, dbsuffix="", collar_cols={}, survey_cols={}):
         survey.append_column(tmpcol)
 
 
-def og_add_interval(eng, meta, table_name, cols={}, dbsuffix=""):
+def og_add_interval(eng, meta, table_name, cols={}, dbsuffix=None):
     """og_add_interval(eng, meta, table_name, cols={}, dbsuffix="")
 
     Create drillhole interval tables in the metadata, eg. assay or log.
@@ -227,7 +227,7 @@ def og_add_interval(eng, meta, table_name, cols={}, dbsuffix=""):
 
     """
     # create interval table
-    interval = Table(dbsuffix+'_'+table_name+'_int', meta,
+    interval = Table(table_name, meta,
                      Column('BHID', None,
                             ForeignKey(column=dbsuffix+'_collar.BHID',
                                        ondelete='CASCADE',
@@ -297,6 +297,25 @@ def og_references(eng, meta, table_name, key='SampleID', cols={}):
     for col in cols:
         tmpcol = Column(col, cols[col]['coltypes'], nullable=cols[col]['nullable'])
         interval.append_column(tmpcol)
+
+
+def og_system(eng, meta):
+    """og_system(eng, meta)
+
+    Create a table for internal use in the metadata ```meta``` in the database connected to ``eng``.
+    Parameters
+    ----------
+    eng : sqlalchemy engine
+            active connection to a database
+
+    meta : sqlalchemy metadata
+            container object that keeps together many different features of a database
+
+    """
+    collar = Table('OG_SMDH_SYSTEM', meta,
+                   Column('Table', String, primary_key=True),
+                   Column('Type', String, nullable=False),
+                   Column('Comments', String))
 
 
 # TODO: add some functions to activate/disactivate constraints
