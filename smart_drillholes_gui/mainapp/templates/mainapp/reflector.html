@@ -1,0 +1,46 @@
+{% extends 'mainapp/base.html' %}
+{% block content %}
+<nav class="navbar navbar-fixed collapse navbar-collapse navbar-default gr-sidebar gr-collapse-height-fix" role="navigation" id="left-panel">
+    <div class="container-fluid">
+      <ul class="nav navbar-nav">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-th"></span> Tables <span style="margin-top:0.5em" class="caret pull-right"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            {% for table_name in tks %}
+            <li><a href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
+            {% endfor %}
+          </ul>
+        </li>
+        <li><a href="#">Remove Table</a></li>
+      </ul>
+  </div>
+</nav>
+<div class="col-md-10 col-md-offset-2">
+  <div class="table-responsive">
+  <table class="table table-condensed table-hover table-bordered table-striped">
+  <caption>smart drillholes tables</caption>
+  <thead>
+  <tr>
+  {% for col in cols %}
+  <th>
+    {{ col }}
+  </th>
+  {% endfor %}
+  </tr>
+  </thead>
+  <tbody>
+    {% for dat in data %}
+    <tr>
+      {% for d in dat %}
+    <td>
+      {{ d }}
+    </td>
+      {% endfor %}
+  </tr>
+    {% endfor %}
+
+  </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}
