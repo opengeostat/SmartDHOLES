@@ -12,16 +12,15 @@ class og_dbTable:
     def getPKeys(self):
         return self.primary_keys
 
+    def getPKeysIndex(self):
+        pk_indx = []
+        for indx, column in enumerate(self.columns):
+            if column.primary_key:
+                pk_indx.append(indx)
+        return pk_indx
+
     def getFKeys(self):
         return self.foreign_keys
-
-    def getColumns(self):
-        cols = []
-        for column in self.columns:
-            rep = str(column.name)
-            cols.append(rep)
-
-        return cols
 
     def setPKeys(self, primary_keys):
         self.primary_keys = primary_keys
@@ -31,3 +30,13 @@ class og_dbTable:
 
     def setColumns(self, columns):
         self.columns = columns
+
+    def getColumnNames(self):
+        cols = []
+        for column in self.columns:
+            rep = str(column.name)
+            cols.append(rep)
+        return cols
+
+    def getColumns(self):
+        return self.columns

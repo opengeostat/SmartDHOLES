@@ -1,10 +1,13 @@
 {% extends 'mainapp/base.html' %}
+{% load staticfiles %}
 {% block content %}
 <nav class="navbar navbar-fixed collapse navbar-collapse navbar-default gr-sidebar gr-collapse-height-fix" role="navigation" id="left-panel">
     <div class="container-fluid">
       <ul class="nav navbar-nav">
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-th"></span> Tables <span style="margin-top:0.5em" class="caret pull-right"></span></a>
+        <li class="dropdown open">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+            <span class="glyphicon glyphicon-th"></span> Tables
+            <span style="margin-top:0.5em" class="caret pull-right"></span></a>
           <ul class="dropdown-menu" role="menu">
             {% for table_name in tks %}
             <li><a href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
@@ -16,9 +19,12 @@
   </div>
 </nav>
 <div class="col-md-10 col-md-offset-2">
+  <form action="." method="post">
+{% csrf_token %}
+<input type="hidden" name="tablename" value={{ table_key }}>
   <div class="table-responsive">
   <table class="table table-condensed table-hover table-bordered table-striped">
-  <caption>smart drillholes tables</caption>
+  <caption>smart drillholes table: <strong>{{table_key}}</strong></caption>
   <thead>
   <tr>
   {% for col in cols %}
@@ -26,21 +32,48 @@
     {{ col }}
   </th>
   {% endfor %}
+  <th><span class="glyphicon glyphicon-trash"></span></th>
   </tr>
   </thead>
   <tbody>
     {% for dat in data %}
     <tr>
-      {% for d in dat %}
+      {% for d in dat.data %}
     <td>
       {{ d }}
     </td>
       {% endfor %}
+      <td><input name="checkbox-delete" type="checkbox" value="{{ dat.pks }}"></td>
   </tr>
     {% endfor %}
 
   </tbody>
   </table>
   </div>
+
+  <div class="pull-right">
+    <button type="submit" id="btnsave"  class="btn btn-success"><span class="glyphicon glyphicon-ok"></span> Save</button>
+    <a href="" class="btn btn-danger" role="button"><span class="glyphicon glyphicon-warning-sign"></span> Cancel</a>
+  </div>
+
+    </form>
+
 </div>
 {% endblock %}
+
+{% block extra %}
+
+<script>
+$(document).ready(function(){
+$("#llbtnsave").click(function(evento){
+
+//evento.preventDefault();
+$.ajax({
+  type: 'POST',
+  url: "{% url 'mainapp:reflector' %}",
+});
+
+});
+});
+</script>
+{% endblock extra %}

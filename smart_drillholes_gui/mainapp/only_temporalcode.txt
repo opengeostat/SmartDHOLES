@@ -1,0 +1,4 @@
+#Object_table = surveytable(BHID = 3.7, at = 'kolx', az = 14.0, dip = 14.0 ,Comments = 'hola')
+#session.add(Object_table)
+#session.flush()
+#session.rollback()
