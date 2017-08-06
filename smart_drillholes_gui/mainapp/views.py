@@ -65,32 +65,36 @@ def dashboard(request):
                   {'ref': 'dashboard'})
     return response
 
+
+
 #@csrf_exempt
 def reflector(request, table_key = ''):
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    dbName = BASE_DIR+'/smart4.sqlite'
-    if dbName != '':
-        engineURL = 'sqlite:///'+dbName
-        reflector = Reflector(str(engineURL))
-        global session
-        session = None
-        cols,tks,data,table_key = update(reflector, table_key)
 
     if request.method == 'POST':
         pks = request.POST.getlist('checkbox-delete')
         pp = []
         for i,pk in enumerate(pks):
             pks[i] = pk.split(',')
-        tablename = request.POST['tablename']
+        table_key = str(request.POST['tablename'])
         Base = declarative_base()
-        table = reflector.getOg_table(tablename)
+        table = reflector.getOg_table(str(table_key))
 
-        object_table = type(str(tablename), (Base,), defineObject(table))
+        object_table = type(str(table_key), (Base,), defineObject(table))
 
         for pk in pks:
             query = session.query(object_table).get(pk)
             session.delete(query)
             session.commit()
+
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    dbName = BASE_DIR+'/smart4.sqlite'
+    if dbName != '':
+        engineURL = 'sqlite:///'+dbName
+        global reflector
+        reflector = Reflector(str(engineURL))
+        reflector.reflectTables()
+
+    cols,tks,data,table_key = update(reflector, table_key)
 
     return render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
 
@@ -120,11 +124,16 @@ def defineObject(table):
     return tbl_def
 
 def update(reflector, table_key):
-    if reflector.reflectTables():
+    if reflector.is_reflected():
         #table list
         tableList = reflector.getOg_tables()
         DBSession = sessionmaker(bind=reflector.get_engine())
+        #nonlocal session
+        global session
         session = DBSession()
+
+        #table names for template
+        tks = reflector.get_tableKeys()
 
         data = []
         if table_key != '':
@@ -135,6 +144,9 @@ def update(reflector, table_key):
             table = reflector.getOg_table(table_key)
             dat = session.query(reflector.get_metadata().tables[tks[0]]).all()
 
+        #columns for template table
+        cols = table.getColumnNames()
+
         #for set primary keys on checkbox delete field
         indxs = table.getPKeysIndex()
         for dt in dat:
@@ -144,8 +156,5 @@ def update(reflector, table_key):
 
             dic = {'pks':','.join(ids),'data':dt}
             data.append(dic)
-        #columns for template table
-        cols = table.getColumnNames()
-                #table names for template
-        tks = reflector.get_tableKeys()
+
     return (cols,tks,data,table_key)

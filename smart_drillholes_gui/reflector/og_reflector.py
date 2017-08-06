@@ -13,6 +13,8 @@ class Reflector():
         self.table_keys = []
         self.pure_tables = []
 
+        self.reflected = False
+
     #-fatal
     def fatal(self,*L):
         print >>sys.stderr, ''.join(L)
@@ -26,11 +28,13 @@ class Reflector():
             db_name = self.engineURL.split('///')[-1]
 
             self.fatal("Could not connect: %s" % db_name)
+            self.reflected = False
             return False
         else:
             self.table_keys = self.metadata.tables.keys()
             for tableName in sorted(self.metadata.tables.keys()):
                 self.create_ogTable(self.metadata.tables[tableName])
+            self.reflected = True
             return True
 
     #-showTable
@@ -67,3 +71,6 @@ class Reflector():
 
     def get_engine(self):
         return self.db
+
+    def is_reflected(self):
+        return self.reflected
