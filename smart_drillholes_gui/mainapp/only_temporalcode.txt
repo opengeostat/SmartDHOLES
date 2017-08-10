@@ -2,3 +2,8 @@
 #session.add(Object_table)
 #session.flush()
 #session.rollback()
+
+'NAME': 'gramvidb',
+'USER': 'gramvi_admin',
+'PASSWORD': 'password',
+'HOST': 'localhost',

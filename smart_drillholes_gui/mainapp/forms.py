@@ -19,10 +19,28 @@ TABLE_TYPE_CHOICES = (
 )
 
 
-class OpenForm(forms.Form):
+class OpenPostgresForm(forms.Form):
+    host = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+                                                         'class': 'form-control',
+                                                         'placeholder': 'host'}))
     name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
-                                                         'placeholder': 'Database'}))
+                                                         'placeholder': 'database'}))
+    user = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+                                                         'class': 'form-control',
+                                                         'placeholder': 'username'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'required': True,
+                                                         'class': 'form-control',
+                                                         'placeholder': 'password'}))
+    db_type = forms.ChoiceField(widget=forms.Select(attrs={'required': True,
+                                                           'class': 'form-control'}),
+                                choices=DB_TYPE_CHOICES,
+                                label="Database type:"
+                                )
+
+class OpenSQliteForm(forms.Form):
+
+    sqlite_file = forms.CharField(widget=forms.FileInput(attrs={'required': True}))
     db_type = forms.ChoiceField(widget=forms.Select(attrs={'required': True,
                                                            'class': 'form-control'}),
                                 choices=DB_TYPE_CHOICES,

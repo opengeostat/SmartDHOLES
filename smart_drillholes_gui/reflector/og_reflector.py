@@ -2,8 +2,9 @@
 
 import sys
 
-from sqlalchemy import schema, engine, exc
+from sqlalchemy import MetaData, engine, exc
 from og_tables import og_dbTable
+from sqlalchemy.orm import sessionmaker
 
 #-reflector
 class Reflector():
@@ -22,8 +23,8 @@ class Reflector():
 
     def reflectTables(self):
         try:
-            self.db = engine.create_engine(self.engineURL)
-            self.metadata = schema.MetaData(bind=self.db, reflect=True)
+            self.dbengine = engine.create_engine(self.engineURL)
+            self.metadata = MetaData(bind=self.dbengine, reflect=True)
         except exc.SQLAlchemyError:
             db_name = self.engineURL.split('///')[-1]
 
@@ -70,7 +71,11 @@ class Reflector():
         return self.metadata
 
     def get_engine(self):
-        return self.db
+        return self.dbengine
+
+    def make_session(self):
+        DBSession = sessionmaker(bind=self.dbengine)
+        return DBSession()
 
     def is_reflected(self):
         return self.reflected

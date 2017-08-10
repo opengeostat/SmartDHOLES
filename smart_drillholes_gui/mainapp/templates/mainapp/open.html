@@ -1,20 +1,83 @@
 {% extends 'mainapp/base.html' %}
+{% load staticfiles %}
 {% block content %}
 <div class="col-md-6 col-md-offset-3">
-  <form method="POST" action="{% url 'mainapp:open' %}">
+{% if form.errors %}{{form.errors}}{% endif %}
+
+  <form id="formid" method="POST" action="{% url 'mainapp:open' %}" enctype="multipart/form-data">
     {% csrf_token %}
-    <div class="form-group">
-      {{ form.db_type.label_tag }}
-      {{ form.db_type }}
-    </div>
-    <div class="form-group">
-      {{ form.name.label_tag }}
-      {{ form.name }}
-    </div>
-    <div class="text-right">
+
+      <div class="form-group" id="dbtype">
+        <label for="id_db_type">Database type:</label>
+        <select name="db_type" required="" class="form-control" id="id_db_type">
+          <option id="sqlite" value="sqlite">SQLite</option>
+          <option id="postgres" value="postgresql">PostgreSQL</option>
+        </select>
+      </div>
+
+      <div id="form_group_file" class="form-group">
+        <label for="id_sqlite_file">Sqlite file:</label>
+        <input name="sqlite_file" required="" id="id_sqlite_file" type="file">
+      <p class="help-block">Select sqlite database file.</p>
+      {{sqlite_file}}
+      </div>
+
+
+    <div id="btns" class="text-right">
       <a href="{% url 'mainapp:index' %}" class="btn btn-danger">Cancel</a>
       <button type="submit" class="btn btn-success">Open</button>
     </div>
   </form>
+  <div class="">
+    <p>{{urlfile}}</p>
+  </div>
 </div>
 {% endblock %}
+
+{% block javascript %}
+
+<script>
+$(document).ready(function(){
+$('option#sqlite').attr('selected',"selected");
+$("#id_db_type").change(function(evento){
+  if(this.value == 'postgresql'){
+    var  input_host = "<div id='form_group_host' class='form-group'>"+
+              "<label for='id_host'>Host:</label>"+
+              "<input required name='host' placeholder='host' value='localhost' class='form-control' id='id_host' type='text'>"+
+              "<p class='help-block'>localhost is set to default host.</p></div>"
+  var  input_name = "<div id='form_group_name' class='form-group'>"+
+            "<label for='id_name'>Name:</label>"+
+            "<input required name='name' placeholder='database' class='form-control' id='id_name' type='text'></div>"
+  var  input_user = "<div id='form_group_user' class='form-group'>"+
+            "<label for='id_user'>User:</label>"+
+            "<input required name='user' placeholder='username' class='form-control' id='id_user' type='text'></div>"
+  var  input_password = "<div id='form_group_password' class='form-group'>"+
+              "<label for='id_password'>Password:</label>"+
+              "<input required name='password' placeholder='password' class='form-control' id='id_password' type='password'></div>"
+
+    $('div#form_group_file').remove();
+    $('#formid div#btns').before(input_host);
+    $('#formid div#btns').before(input_name);
+    $('#formid div#btns').before(input_user);
+    $('#formid div#btns').before(input_password);
+  }
+  else if (this.value == 'sqlite'){
+    input_file = "<div id='form_group_file' class='form-group'>"+
+                "<label for='id_sqlite_file'>Sqlite file:</label>"+
+                "<input required name='sqlite_file' id='id_sqlite_file' type='file'>"+
+                "<p class='help-block'>Select sqlite database file.</p></div>";
+
+    $('#formid div#btns').before(input_file);
+    $('div#form_group_host').remove();
+    $('div#form_group_name').remove();
+    $('div#form_group_user').remove();
+    $('div#form_group_password').remove();
+
+  }
+});
+
+
+});
+
+</script>
+{% endblock javascript %}
