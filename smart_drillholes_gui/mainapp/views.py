@@ -35,7 +35,8 @@ def open(request):
         elif request.POST['db_type'] == "sqlite":
             form = OpenSQliteForm(request.POST, request.FILES)
         if form.is_valid():
-            if form.cleaned_data.get('db_type') == 'sqlite':
+            db_type = form.cleaned_data.get('db_type')
+            if db_type == 'sqlite':
                 #content_type: application/octet-stream
                 urlfile = request.FILES["sqlite_file"]
                 name = form.cleaned_data.get('sqlite_file')
@@ -46,7 +47,7 @@ def open(request):
                     engineURL = 'sqlite:///'+dbName
                 #con_string = 'sqlite:///{0}.sqlite'.format(name)
                 con_string = engineURL
-            elif form.cleaned_data.get('db_type') == 'postgresql':
+            elif db_type == 'postgresql':
                 host = form.cleaned_data.get('host')
                 dbname = form.cleaned_data.get('name')
                 user = form.cleaned_data.get('user')
@@ -55,16 +56,16 @@ def open(request):
                 #response = redirect('mainapp:dashboard')
 
             request.session['engineURL'] = con_string
+            request.session['db_type'] = db_type
 
             reflector = Reflector(con_string)
             reflector.reflectTables()
             cols,tks,data,table_key = update(reflector)
 
-            return render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
-                #return render(request,'mainapp/open.html', {'urlfile':con_string})
-            expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
-            response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
-            response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
+            response = render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
+            #expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
+            #response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
+            #response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
             return response
     return render(request,
                      'mainapp/open.html',
@@ -172,6 +173,7 @@ def defineObject(table):
 
     return tbl_def
 
+#this function update the data from database
 def update(reflector, table_key = '', session = ''):
     if reflector.is_reflected():
         if session == '':
@@ -190,7 +192,7 @@ def update(reflector, table_key = '', session = ''):
             dat = session.query(reflector.get_metadata().tables[tks[0]]).all()
 
         #columns for template table
-        cols = table.getColumnNames()
+        cols = table.getColumnsInfo()
 
         #for set primary keys on checkbox delete field
         indxs = table.getPKeysIndex()
@@ -207,10 +209,14 @@ def update(reflector, table_key = '', session = ''):
 
 def add_table(request):
     if request.method in ['GET', 'POST']:
-        if request.COOKIES.get('db_type') == "sqlite":
-            con_string = 'sqlite:///{}.sqlite'.format(request.COOKIES.get('db'))
-        elif request.COOKIES.get('db_type') == "postgresql":
-            con_string = 'postgresql://postgres@localhost/{}'.format(request.COOKIES.get('db'))
+        #if request.COOKIES.get('db_type') == "sqlite":
+        if request.session.get('db_type') == "sqlite":
+            #con_string = 'sqlite:///{}.sqlite'.format(request.COOKIES.get('db'))
+            con_string = request.session.get('engineURL')
+        #elif request.COOKIES.get('db_type') == "postgresql":
+        elif request.session.get('db_type') == "postgresql":
+            #con_string = 'postgresql://postgres@localhost/{}'.format(request.COOKIES.get('db'))
+            con_string = request.session.get('engineURL')
         eng, meta = og_connect(con_string)
     if request.method == 'GET':
         form = AddTableForm(meta=meta)

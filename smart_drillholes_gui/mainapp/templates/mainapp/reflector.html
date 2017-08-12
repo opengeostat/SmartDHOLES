@@ -29,7 +29,11 @@
   <tr>
   {% for col in cols %}
   <th>
-    {{ col }}
+      {{ col.name }}
+      {% if col.primary_key %}<span><img src="{% static 'img/pk.png' %}" class="img-responsive" alt="primarykey image"></span>{% endif %}
+      {% if col.foreign_key %}<span><img src="{% static 'img/fk.png' %}" class="img-responsive" alt="foreignkey image"></span>{% endif %}
+      {% if col.unique %}U{% endif %}
+      {% if col.nullable %}N{% endif %}
   </th>
   {% endfor %}
   <th><span class="glyphicon glyphicon-trash"></span></th>
@@ -53,7 +57,6 @@
 
   <div class="pull-right">
     <button type="submit" id="btnsave"  class="btn btn-success"><span class="glyphicon glyphicon-ok"></span> Save</button>
-    <a href="" class="btn btn-danger" role="button"><span class="glyphicon glyphicon-warning-sign"></span> Cancel</a>
   </div>
 
     </form>

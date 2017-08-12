@@ -172,7 +172,7 @@ def og_create_dhdef(eng, meta, dbsuffix="", collar_cols={}, survey_cols={}):
         survey.append_column(tmpcol)
 
 
-def og_add_interval(eng, meta, table_name, cols={}, dbsuffix=None):
+def og_add_interval(eng, meta, table_name, cols={}, dbsuffix=""):
     """og_add_interval(eng, meta, table_name, cols={}, dbsuffix="")
 
     Create drillhole interval tables in the metadata, eg. assay or log.
