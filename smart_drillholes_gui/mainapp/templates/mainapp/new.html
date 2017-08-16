@@ -1,6 +1,14 @@
 {% extends 'mainapp/base.html' %}
 {% block content %}
 <div class="col-md-6 col-md-offset-3">
+  {% if messages %}
+  {% for message in messages %}
+  <div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      {{ message }}
+  </div>
+  {% endfor %}
+  {% endif %}
   <form method="POST" action="{% url 'mainapp:new' %}">
     {% csrf_token %}
     <div class="form-group">

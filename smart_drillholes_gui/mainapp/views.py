@@ -8,7 +8,8 @@ import datetime
 
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Float
+from sqlalchemy import Column, String, Float, exc
+from psycopg2 import ProgrammingError
 # Views
 #from django.views.decorators.csrf import csrf_exempt
 #import json
@@ -18,12 +19,16 @@ import os
 import re
 from django.urls import reverse
 
+from sqlalchemy import create_engine
+
+from django.contrib import messages
+
+
 def index(request):
     response = render(request,
                       'mainapp/index.html',
                       {'ref': 'index'})
     return response
-
 
 def open(request):
     if request.method == "GET":
@@ -53,7 +58,6 @@ def open(request):
                 user = form.cleaned_data.get('user')
                 password = form.cleaned_data.get('password')
                 con_string = 'postgresql://{2}:{3}@{0}/{1}'.format(host,dbname,user,password)
-                #response = redirect('mainapp:dashboard')
 
             request.session['engineURL'] = con_string
             request.session['db_type'] = db_type
@@ -67,10 +71,8 @@ def open(request):
             #response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
             #response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
             return response
-    return render(request,
-                     'mainapp/open.html',
-                     {'form': form,
-                      'ref': 'open'})
+
+    return render(request,'mainapp/open.html',{'form': form})
 
 def new(request):
     if request.method == "GET":
@@ -84,11 +86,22 @@ def new(request):
         if form.is_valid():
             if form.cleaned_data.get('db_type') == 'sqlite':
                 con_string = 'sqlite:///{}.sqlite'.format(form.cleaned_data.get('name'))
-            elif form.cleaned_data('db_type') == 'postgresql':
-
-                con_string = 'postgresql://postgres@localhost/{}'.format(form.cleaned_data.get('name'))
-
+            elif form.cleaned_data.get('db_type') == 'postgresql':
+                dbname_to_create = form.cleaned_data.get('name')
+                try:
+                    con_string = pg_create(user = 'gramvi_admin', password = 'password', dbname_to_create = dbname_to_create)
+                #database "lm" already exists
+                except exc.ProgrammingError as err:
+                    if "already exists" in str(err):
+                        messages.add_message(request, messages.WARNING, 'Database "%s" already exists.'%(dbname_to_create))
+                        messages.add_message(request, messages.INFO, 'Please verify all postgres database names.')
+                        return redirect('mainapp:new')
             eng, meta = og_connect(con_string)
+
+            og_create_dhdef(eng, meta)
+
+            og_system(eng, meta)
+
             og_references(eng, meta, table_name='assay_certificate', key='SampleID', cols={'Au': {'coltypes': Float,
                                                                                            'nullable': True}})
             og_references(eng, meta, table_name='rock_catalog', key='RockID', cols={'Description': {'coltypes': String,
@@ -206,6 +219,31 @@ def update(reflector, table_key = '', session = ''):
     session.close()
     del reflector
     return (cols,tks,data,table_key)
+
+def pg_create(user, password, dbname_to_create, host = "localhost", dbname_to_connect = "postgres"):
+    str_engine = "postgresql://{2}:{3}@{0}/{1}".format(host,dbname_to_connect,user,password)
+    engine = create_engine(str_engine)
+    with engine.connect().execution_options(
+            isolation_level="AUTOCOMMIT") as conn:
+
+        #currentdb = conn.scalar("select current_database()")
+        for attempt in range(3):
+            try:
+                #"CREATE DATABASE %s TEMPLATE %s" % (dbname_to_create, currentdb))
+                conn.execute("CREATE DATABASE %s" % (dbname_to_create))
+            except exc.ProgrammingError:
+                raise
+            except exc.OperationalError as err:
+                if attempt != 2 and "accessed by other users" in str(err):
+                    time.sleep(.2)
+                    continue
+                else:
+                    raise
+            else:
+                conn.close()
+                str_engine = "postgresql://{2}:{3}@{0}/{1}".format(host,dbname_to_create,user,password)
+                break
+    return str_engine
 
 def add_table(request):
     if request.method in ['GET', 'POST']:

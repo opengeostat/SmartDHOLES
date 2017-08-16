@@ -69,7 +69,6 @@ def og_connect(con_string='sqlite:///test2.sqlite', echo=False):
 
     return eng, meta
 
-
 def og_create_dhdef(eng, meta, dbsuffix="", collar_cols={}, survey_cols={}):
     """og_create_dhdef(eng, meta, dbsuffix="", collar_cols={}, survey_cols={})
 
@@ -129,7 +128,14 @@ def og_create_dhdef(eng, meta, dbsuffix="", collar_cols={}, survey_cols={}):
     assert 'collar' not in eng.table_names(), 'Collar table: {} already in database'.format('collar')
     assert 'survey' not in eng.table_names(), 'Surbey table: {} already in database'.format('survey')
 
-    collar = Table('collar', meta,
+    if dbsuffix != "":
+        colar_tb_name = dbsuffix+"_collar"
+        survey_tb_name = dbsuffix+"_survey"
+    else:
+        colar_tb_name = "collar"
+        survey_tb_name = "survey"
+
+    collar = Table(colar_tb_name, meta,
                    Column('BHID', String, primary_key=True),
                    Column('xcollar', Float, nullable=False),
                    Column('ycollar', Float, nullable=False),
@@ -137,9 +143,9 @@ def og_create_dhdef(eng, meta, dbsuffix="", collar_cols={}, survey_cols={}):
                    Column('LENGTH', Float, nullable=False),
                    Column('Comments', String))
 
-    survey = Table('survey', meta,
+    survey = Table(survey_tb_name, meta,
                    Column('BHID', None,
-                          ForeignKey(column=dbsuffix+'_collar.BHID',
+                          ForeignKey(column=colar_tb_name+'.BHID',
                                      ondelete='CASCADE',
                                      onupdate='CASCADE',
                                      name='chk_bhid'),
@@ -226,10 +232,15 @@ def og_add_interval(eng, meta, table_name, cols={}, dbsuffix=""):
                              'Au_visual':{'coltypes':Float, 'nullable': True}})
 
     """
+    if dbsuffix != "":
+        colar_tb_name = dbsuffix+"_collar"
+    else:
+        colar_tb_name = "collar"
+
     # create interval table
     interval = Table(table_name, meta,
                      Column('BHID', None,
-                            ForeignKey(column=dbsuffix+'_collar.BHID',
+                            ForeignKey(column=colar_tb_name+'.BHID',
                                        ondelete='CASCADE',
                                        onupdate='CASCADE',
                                        name='chk_bhid'),
