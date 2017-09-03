@@ -1,13 +1,13 @@
 {% extends 'mainapp/base.html' %}
 {% load staticfiles %}
 {% block content %}
-<div class="col-md-6 col-md-offset-3">
+<div class="col-md-6 mx-auto">
 {% if form.errors %}{{form.errors}}{% endif %}
 
   <form id="formid" method="POST" action="{% url 'mainapp:open' %}" enctype="multipart/form-data">
     {% csrf_token %}
 
-      <div class="form-group" id="dbtype">
+      <div class="form-group mt-2" id="dbtype">
         <label for="id_db_type">Database type:</label>
         <select name="db_type" required="" class="form-control" id="id_db_type">
           <option id="sqlite" value="sqlite">SQLite</option>
@@ -15,15 +15,14 @@
         </select>
       </div>
 
-      <div id="form_group_file" class="form-group">
-        <label for="id_sqlite_file">Sqlite file:</label>
-        <input name="sqlite_file" required="" id="id_sqlite_file" type="file">
-      <p class="help-block">Select sqlite database file.</p>
-      {{sqlite_file}}
-      </div>
+      <label id="form_group_file" class="custom-file">Sqlite file:
+        <input class="custom-file-input" name="sqlite_file" required="" id="id_sqlite_file" type="file">
+        <span class="custom-file-control"></span>
+        {{sqlite_file}}
+      </label>
 
 
-    <div id="btns" class="text-right">
+    <div id="btns" class="text-right mt-2">
       <a href="{% url 'mainapp:index' %}" class="btn btn-danger">Cancel</a>
       <button type="submit" class="btn btn-success">Open</button>
     </div>
@@ -55,17 +54,17 @@ $("#id_db_type").change(function(evento){
               "<label for='id_password'>Password:</label>"+
               "<input required name='password' placeholder='password' class='form-control' id='id_password' type='password'></div>"
 
-    $('div#form_group_file').remove();
+    $('#form_group_file').remove();
     $('#formid div#btns').before(input_host);
     $('#formid div#btns').before(input_name);
     $('#formid div#btns').before(input_user);
     $('#formid div#btns').before(input_password);
   }
   else if (this.value == 'sqlite'){
-    input_file = "<div id='form_group_file' class='form-group'>"+
-                "<label for='id_sqlite_file'>Sqlite file:</label>"+
-                "<input required name='sqlite_file' id='id_sqlite_file' type='file'>"+
-                "<p class='help-block'>Select sqlite database file.</p></div>";
+    input_file = "<label id='form_group_file' class='custom-file'>Sqlite file:"+
+      "<input class='custom-file-input' name='sqlite_file' required='' id='id_sqlite_file' type='file'>"+
+      "<span class='custom-file-control'></span>"+
+      "{{sqlite_file}}</label>";
 
     $('#formid div#btns').before(input_file);
     $('div#form_group_host').remove();
