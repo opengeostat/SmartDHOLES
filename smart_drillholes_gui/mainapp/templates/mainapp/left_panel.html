@@ -1,7 +1,7 @@
 <nav class="navbar navbar-fixed collapse navbar-collapse navbar-default gr-sidebar gr-collapse-height-fix" role="navigation" id="left-panel">
     <div class="container-fluid">
       <ul class="nav navbar-nav">
-        <li><a href="{% url 'mainapp:add_table' %}">Add Table</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'mainapp:add_table' %}">Add Table</a></li>
         {% comment %}
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">Add Table <span style="margin-top:0.5em" class="caret pull-right"></span></a>
@@ -11,7 +11,7 @@
           </ul>
         </li>
         {% endcomment %}
-      <li><a href="{% url 'mainapp:reflector' %}">Structure</a></li>
+      <li class="nav-item "><a class="nav-link" href="{% url 'mainapp:reflector' %}">Structure</a></li>
       </ul>
   </div>
 </nav>

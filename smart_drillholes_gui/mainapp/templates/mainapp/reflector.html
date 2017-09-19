@@ -8,12 +8,12 @@
           <a class="nav-link text-light" href="#">
             <i class="fa fa-th"></i> Tables <i class="float-right fa fa-caret-right"></i>
           </a>
-          <ul class="nav flex-column" style="display:none" role="menu">
-            {% for table_name in tks %}
-            <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-light" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
-            {% endfor %}
-          </ul>
         </li>
+        <ul id="left-panel-tables" class="nav flex-column" style="display:none" role="menu">
+          {% for table_name in tks %}
+          <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-light" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
+          {% endfor %}
+        </ul>
         <li class="nav-item"><a class="nav-link text-light" href="#">Remove Table</a></li>
       </ul>
 </div>
@@ -86,11 +86,11 @@ $.ajax({
 $(".left-panel-droopdown").click(function(evento){
   evento.preventDefault();
   if($(this).attr('status')=="closed"){
-    $(this).find('ul').attr('style','display:flex');
+    $("#left-panel-tables").attr('style','display:flex');
     $(this).find('i.fa.fa-caret-right').attr('style','transform: rotate(90deg)');
     $(this).attr('status','open');
   }else{
-    $(this).find('ul').attr('style','display:none');
+    $("#left-panel-tables").attr('style','display:none');
     $(this).find('i.fa.fa-caret-right').attr('style','transform: rotate(0deg)');
     $(this).attr('status','closed');
   }
