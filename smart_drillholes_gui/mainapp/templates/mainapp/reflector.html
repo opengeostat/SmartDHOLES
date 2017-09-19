@@ -25,7 +25,7 @@
   <div class="table-responsive">
   <h6 class="text-muted mt-2 pull-left">smart drillholes table: <strong>{{table_key}}</strong></h6>
   <button type="submit" id="btnsave"  class="btn btn-success btn-sm pull-right my-2"><span class="fa fa-check"></span> Save</button>
-  <table class="table table-sm table-bordered table-striped">
+  <table class="table table-sm table-bordered table-striped" id="DB_Table">
   <thead class="table-inverse">
   <tr>
   {% for col in cols %}
@@ -95,6 +95,14 @@ $(".left-panel-droopdown").click(function(evento){
     $(this).attr('status','closed');
   }
 });
+$("#DB_Table").dataTable({
+  paging:false,
+  columnDefs: [
+                { orderable: false, targets: -1 }
+              ],
+});
+$("#DB_Table_filter input").addClass("form-control form-control-sm mx-2");
+$("#DB_Table_filter").addClass("form-inline mt-2 clearfix float-right");
 });
 </script>
 {% endblock javascript %}
