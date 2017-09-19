@@ -66,7 +66,7 @@ def open(request):
             reflector.reflectTables()
             cols,tks,data,table_key = update(reflector)
 
-            response = render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
+            return redirect('mainapp:reflector', table_key)
             #expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
             #response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
             #response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
