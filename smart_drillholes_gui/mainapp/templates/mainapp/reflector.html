@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block content %}
 <div class="row flex-xl-nowrap row-eq-height">
-<div class="col-12 col-md-3 col-xl-2 bd-sidebar bg-dark p-0" role="navigation" id="left-panel">
+<div class="col-sm-12 col-lg-3 col-xl-2 bd-sidebar bg-dark p-0" role="navigation" id="left-panel">
       <ul class="nav flex-column left-panel">
         <li class="nav-item left-panel-droopdown clearfix" status="closed">
           <a class="nav-link text-light" href="#">
@@ -17,25 +17,26 @@
         <li class="nav-item"><a class="nav-link text-light" href="#">Remove Table</a></li>
       </ul>
 </div>
-<div class="col-12 col-md-9">
-  <form action="." method="post">
+<div class="col-12 col-lg-9 col-xl-10">
+  <form action="." method="post" class="pb-2 clearfix">
 {% csrf_token %}
 <input type="hidden" name="tablename" value={{ table_key }}>
   <div class="table-responsive">
-  <table class="table table-condensed table-hover table-bordered table-striped">
-  <caption>smart drillholes table: <strong>{{table_key}}</strong></caption>
-  <thead>
+  <h6 class="text-muted mt-2 pull-left">smart drillholes table: <strong>{{table_key}}</strong></h6>
+  <button type="submit" id="btnsave"  class="btn btn-success btn-sm pull-right my-2"><span class="fa fa-check"></span> Save</button>
+  <table class="table table-sm table-bordered table-striped">
+  <thead class="table-inverse">
   <tr>
   {% for col in cols %}
   <th>
       {{ col.name }}
-      {% if col.primary_key %}<span><img src="{% static 'img/pk.png' %}" class="img-responsive" alt="primarykey image"></span>{% endif %}
-      {% if col.foreign_key %}<span><img src="{% static 'img/fk.png' %}" class="img-responsive" alt="foreignkey image"></span>{% endif %}
+      {% if col.primary_key %}<span class="fa fa-key text-warning"></span>{% endif %}
+      {% if col.foreign_key %}<span class="fa fa-key text-danger"></span>{% endif %}
       {% if col.unique %}U{% endif %}
       {% if col.nullable %}N{% endif %}
   </th>
   {% endfor %}
-  <th><span class="glyphicon glyphicon-trash"></span></th>
+  <th><span class="fa fa-trash"></span></th>
   </tr>
   </thead>
   <tbody>
@@ -46,8 +47,8 @@
       {{ d }}
     </td>
       {% endfor %}
-      <td>
-        <label class="custom-control custom-checkbox">
+      <td style="width:1%">
+        <label class="custom-control custom-checkbox m-0 p-2">
         <input name="checkbox-delete" value="{{ dat.pks }}" type="checkbox" class="custom-control-input">
         <span class="custom-control-indicator"></span>
         </label>
@@ -59,9 +60,7 @@
   </table>
   </div>
 
-  <div class="pull-right">
-    <button type="submit" id="btnsave"  class="btn btn-success"><span class="glyphicon glyphicon-ok"></span> Save</button>
-  </div>
+    <button type="submit" id="btnsave"  class="btn btn-success btn-sm pull-right"><span class="fa fa-check"></span> Save</button>
 
     </form>
 
