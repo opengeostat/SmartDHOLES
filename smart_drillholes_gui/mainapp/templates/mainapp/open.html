@@ -10,17 +10,13 @@
       <input hidden value="/" id="current_path" name="current_path"/>
       <input hidden id="selected_file" name="selected_file"/>
       <div class="form-group mt-2" id="dbtype">
-        <label for="id_db_type">Database type:</label>
-        <select name="db_type" required="" class="form-control" id="id_db_type">
-          <option id="sqlite" value="sqlite">SQLite</option>
-          <option id="postgres" value="postgresql">PostgreSQL</option>
-        </select>
+        {{ form.db_type.label_tag }}
+        {{ form.db_type }}
       </div>
       {% if not files_explorer %}
       <label id="form_group_file" class="custom-file">Sqlite file:
-        <input class="custom-file-input" name="sqlite_file" required="" id="id_sqlite_file" type="file">
+        {{ form.sqlite_file }}
         <span class="custom-file-control"></span>
-        {{sqlite_file}}
       </label>
       {% endif %}
     <div id="btns" class="text-right mt-2">
@@ -31,7 +27,7 @@
 </div>
 {# files_explorer#}
 {% if files_explorer %}
-  <div class="card mt-3">
+  <div class="card mt-3" id="files_explorer">
     <div class="card-header">
       <h6 id="current_path_display">/</h6>
     </div>
@@ -76,19 +72,23 @@ $("#id_db_type").change(function(evento){
     $('#formid div#btns').before(input_name);
     $('#formid div#btns').before(input_user);
     $('#formid div#btns').before(input_password);
+    $("#files_explorer").addClass("d-none");
+
   }
   else if (this.value == 'sqlite'){
+    {% if not files_explorer %}
     input_file = "<label id='form_group_file' class='custom-file'>Sqlite file:"+
-      "<input class='custom-file-input' name='sqlite_file' required='' id='id_sqlite_file' type='file'>"+
-      "<span class='custom-file-control'></span>"+
-      "{{sqlite_file}}</label>";
-
+    "<input class='custom-file-input' name='sqlite_file' required='' id='id_sqlite_file' type='file'>"+
+    "<span class='custom-file-control'></span>"+
+    "{{sqlite_file}}</label>";
     $('#formid div#btns').before(input_file);
+    {% endif %}
+
     $('div#form_group_host').remove();
     $('div#form_group_name').remove();
     $('div#form_group_user').remove();
     $('div#form_group_password').remove();
-
+    $("#files_explorer").removeClass("d-none");
   }
 });
 var previous_path = "/"

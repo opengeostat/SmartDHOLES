@@ -32,10 +32,7 @@ def index(request):
 
 def open(request):
     if request.method == "GET":
-        if not settings.files_explorer:
-            form = OpenSQliteForm()
-        else:
-            form = False
+        form = OpenSQliteForm()
     elif request.method == "POST":
         if request.POST['db_type'] == "postgresql":
             form = OpenPostgresForm(request.POST)
