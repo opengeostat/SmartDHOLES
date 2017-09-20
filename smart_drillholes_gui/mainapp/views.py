@@ -82,12 +82,12 @@ def new(request):
         return render(request,
                       'mainapp/new.html',
                       {'form': form,
-                       'ref': 'new'})
+                       'ref': 'new', 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
     elif request.method == "POST":
         form = NewForm(request.POST)
         if form.is_valid():
             if form.cleaned_data.get('db_type') == 'sqlite':
-                con_string = 'sqlite:///{}.sqlite'.format(form.cleaned_data.get('name'))
+                con_string = 'sqlite:///{}.sqlite'.format(os.path.join(request.POST.get('current_path'),form.cleaned_data.get('name')))
             elif form.cleaned_data.get('db_type') == 'postgresql':
                 dbname_to_create = form.cleaned_data.get('name')
                 try:
