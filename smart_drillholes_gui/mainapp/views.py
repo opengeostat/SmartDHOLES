@@ -32,22 +32,28 @@ def index(request):
 
 def open(request):
     if request.method == "GET":
-        form = OpenSQliteForm()
-
+        if not settings.files_explorer:
+            form = OpenSQliteForm()
+        else:
+            form = False
     elif request.method == "POST":
         if request.POST['db_type'] == "postgresql":
             form = OpenPostgresForm(request.POST)
         elif request.POST['db_type'] == "sqlite":
-            form = OpenSQliteForm(request.POST, request.FILES)
-        if form.is_valid():
-            db_type = form.cleaned_data.get('db_type')
+            if not settings.files_explorer:
+                form = OpenSQliteForm(request.POST, request.FILES)
+            db_type = request.POST.get('db_type')
             if db_type == 'sqlite':
+                if settings.files_explorer:
+                    dbName = os.path.join(request.POST.get('current_path'),request.POST.get('selected_file'))
+                else:
+                    if form.is_valid():
+                        urlfile = request.FILES["sqlite_file"]
+                        name = form.cleaned_data.get('sqlite_file')
+                        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        dbName = BASE_DIR+'/smart4.sqlite'
                 #content_type: application/octet-stream
-                urlfile = request.FILES["sqlite_file"]
-                name = form.cleaned_data.get('sqlite_file')
 
-                BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                dbName = BASE_DIR+'/smart4.sqlite'
                 if dbName != '':
                     engineURL = 'sqlite:///'+dbName
                 #con_string = 'sqlite:///{0}.sqlite'.format(name)
