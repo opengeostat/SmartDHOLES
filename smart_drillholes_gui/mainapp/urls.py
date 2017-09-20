@@ -9,4 +9,5 @@ urlpatterns = [
                 url(r'^reflector/(?P<table_key>\w+)/$', views.reflector, name='reflector'),
                 url(r'^reflector/(?P<engineURL>.+)/$', views.reflector, name='reflector'),
                 url(r'^add_table/$', views.add_table, name='add_table'),
+                url(r'^get_folder_content_in_json/$', views.get_folder_content_in_json, name='get_folder_content_in_json'),
 ]

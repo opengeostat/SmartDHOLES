@@ -5,8 +5,8 @@ from django.shortcuts import render, redirect
 from smart_drillholes.core import *
 from .forms import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm
 import datetime
-
-
+from smart_drillholes_gui import settings
+from django.http import JsonResponse, Http404
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Float, exc
 from psycopg2 import ProgrammingError
@@ -71,8 +71,7 @@ def open(request):
             #response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
             #response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
             return response
-
-    return render(request,'mainapp/open.html',{'form': form})
+    return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
 
 def new(request):
     if request.method == "GET":
@@ -291,3 +290,25 @@ def add_table(request):
                                                                                               'onupdate': 'CASCADE'}}})
             execute(eng, meta)
         return redirect('mainapp:dashboard')
+def get_folder_content_in_json(request):
+    if settings.files_explorer:
+        content = get_folder_content(request.GET.get('path'))
+        return JsonResponse({'content': content})
+    else:
+        return Http404('You don\'t have access to this function')
+def get_folder_content(path=None):
+    files = []
+    folders = []
+    if not path:
+        path = "/"
+    try:
+        content = os.listdir(path)
+        for element in content:
+            element_path = os.path.join(path, element)
+            if os.path.isfile(element_path):
+                files.append(element)
+            elif os.path.isdir(element_path) and os.access(element_path, os.R_OK):
+                folders.append(element)
+    except OSError:
+        return False
+    return {"files":files,"folders":folders,"path":path,"previous_path":os.path.dirname(os.path.dirname(path))}

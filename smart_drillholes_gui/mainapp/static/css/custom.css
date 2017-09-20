@@ -4,3 +4,12 @@
 #left-panel-tables{
     background: rgba(0,0,0,0.1);
 }
+.path{
+  cursor: pointer;
+}
+.path.selected{
+  background: rgba(23, 162, 184, 0.31)!important;
+}
+.path:hover,.path:focus{
+  background: rgba(0,0,0,0.05);
+}
