@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{% block language %}{% endblock %}" style="height:100%">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gramvi-Signup</title>
+    <!--Css styles-->
+    <link href="{% static 'mainstyles/bootstrap.min.css' %}" rel="stylesheet" >
+    <link href="{% static 'mainstyles/custom-styles.css' %}" rel="stylesheet">
+    <link href="{% static 'mainstyles/font-awesome.min.css' %}" rel="stylesheet">
+    <!--END Css styles-->
+    <script src="{% static 'js/jquery-3.2.1.slim.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/npm.js' %}"></script>
+  </head>
+  <body class="bg-light" style="height:100%;">
+  <div class="container" style="display: table; height:100%; width:100%">
+    <div class="content clearfix" style="display: table-row; height:100%;">
+      <div style="vertical-align:middle;height:100%;display:table-cell">
+        <div class="clearfix" style="width:100%;max-width:750px;margin-left:auto;margin-right:auto;">
+          <div class="pt-3">
+            <h1 class="text-center">gramvi <br/> <small class="text-muted">create an account</small></h1>
+            <span class="text-center d-block pb-2">Already have an account, <a href="{% url 'login' %}">login</a></span>
+          </div>
+          {# Login form #}
+          <form class="card-body row" method="POST" action="{% url 'mainapp:signup' %}">
+            {% csrf_token %}
+            <div class="col-sm-6 pr-2 pl-2">
+              {{ form.non_field_errors }}
+              <div class="form-group">
+                {% if signup_form.email.errors %}
+                  <div class="alert alert-warning" role="alert">
+                    {{ signup_form.email.errors.as_text }}
+                  </div>
+                {% endif %}
+                {{ signup_form.email.label_tag }}
+                {{ signup_form.email }}
+              </div>
+              <div class="form-group">
+                {% if signup_form.name.errors %}
+                  <div class="alert alert-warning" role="alert">
+                    {{ signup_form.name.errors.as_text }}
+                  </div>
+                {% endif %}
+                {{ signup_form.name.label_tag }}
+                {{ signup_form.name }}
+              </div>
+              <div class="form-group">
+                {% if signup_form.date_of_birth.errors %}
+                  <div class="alert alert-warning" role="alert">
+                    {{ signup_form.date_of_birth.errors.as_text }}
+                  </div>
+                {% endif %}
+                {{ signup_form.date_of_birth.label_tag }}
+                {{ signup_form.date_of_birth }}
+              </div>
+            </div>
+            <div class="col-sm-6 pr-2 pl-2">
+              <div class="form-group">
+                {% if signup_form.phone.errors %}
+                  <div class="alert alert-warning" role="alert">
+                    {{ signup_form.phone.errors.as_text }}
+                  </div>
+                {% endif %}
+                {{ signup_form.phone.label_tag }}
+                {{ signup_form.phone }}
+              </div>
+              <div class="form-group">
+                {% if signup_form.password.errors %}
+                  <div class="alert alert-warning" role="alert">
+                    {{ signup_form.password.errors.as_text }}
+                  </div>
+                {% endif %}
+                {{ signup_form.password.label_tag }}
+                {{ signup_form.password}}
+              </div>
+              <div class="form-group">
+                {% if signup_form.confirm_password.errors %}
+                  <div class="alert alert-warning" role="alert">
+                    {{ signup_form.confirm_password.errors.as_text }}
+                  </div>
+                {% endif %}
+                {{ signup_form.confirm_password.label_tag }}
+                {{ signup_form.confirm_password}}
+              </div>
+            </div>
+            <div class="col-sm-12 pr-2 pl-2">
+              <div class="checkbox">
+                {% if signup_form.accept_terms.errors %}
+                  <div class="alert alert-warning" role="alert">
+                    {{ signup_form.accept_terms.errors.as_text }}
+                  </div>
+                {% endif %}
+                <label class="custom-control custom-checkbox mb-3">
+                  {{ signup_form.accept_terms}}
+                  <span class="custom-control-indicator"></span>
+                  <span class="custom-control-description">Accept <a href="#" target="_blank">terms & conditions</a></span>
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6 pr-2 pl-2 pb-2">
+              <a href="{% url 'mainapp:index' %}" class="btn btn-lg btn-block btn-secondary">Cancel</a>
+            </div>
+            <div class="col-md-6 pr-2 pl-2 pb-2">
+              <button type="submit" class="btn btn-lg btn-block btn-primary" name="sign_up">Create</button>
+            </div>
+
+          </form>
+          {# Login form end #}
+        </div>
+        <div class="col-xs-12 text-center p-10">
+          <span class="text-muted">&copy 2017 gramvi. All Righs Reserved.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

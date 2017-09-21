@@ -3,13 +3,14 @@ from __future__ import unicode_literals
 
 from django.shortcuts import render, redirect
 from smart_drillholes.core import *
-from .forms import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm
+from .forms import MyModelForm, OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, AppUserForm, GenericModelForm
 import datetime
-
-
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Float, exc
 from psycopg2 import ProgrammingError
+
+from django import forms
+
 # Views
 #from django.views.decorators.csrf import csrf_exempt
 #import json
@@ -23,6 +24,104 @@ from sqlalchemy import create_engine
 
 from django.contrib import messages
 
+#------------------Dinamic Model------------------------#
+from django.db import models
+def create_model(name, attrs={}, meta_attrs={}, module_path='django.db.models'):
+    attrs['__module__'] = module_path
+    class Meta:
+        pass
+
+    setattr(Meta, 'app_label', 'reflector')
+
+    Meta.__dict__.update(meta_attrs, __module__ = module_path)
+    attrs['Meta'] = Meta
+    return type(str(name), (models.Model,), attrs)
+
+##dinamic test
+#@csrf_exempt
+def insert(request, table_key = ''):
+    engineURL = request.session.get('engineURL')
+    reflector = Reflector(engineURL)
+    reflector.reflectTables()
+
+    if request.method == 'POST':
+        pks = request.POST.getlist('checkbox-delete')
+        pp = []
+        for i,pk in enumerate(pks):
+            pks[i] = pk.split(',')
+        table_key = str(request.POST['tablename'])
+        Base = declarative_base()
+        table = reflector.getOg_table(str(table_key))
+
+        object_table = type(str(table_key), (Base,), defineObject(table))
+
+        if pks:
+            session = reflector.make_session()
+            for pk in pks:
+                query = session.query(object_table).get(pk)
+                session.delete(query)
+                session.commit()
+            session.close()
+
+    cols,tks,data,table_key = update(reflector, table_key)
+
+    return render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
+
+def generic_add(request, tablename):
+    engineURL = request.session.get('engineURL')
+    reflector = Reflector(engineURL)
+    reflector.reflectTables()
+
+
+    table = reflector.getOg_table(str(tablename))
+    fields = fields_generator(table)
+
+    from django.forms import ModelForm
+
+    generic_model = create_model('generic', attrs=fields)
+
+    class MyGenericModelForm(MyModelForm):
+        class Meta:
+            model = generic_model
+            fields = '__all__'
+
+        def __init__(self, *args, **kwargs):
+            super(MyGenericModelForm, self).__init__(*args, **kwargs)
+            for field in self.fields.values():
+                field.widget.attrs.update({'class': 'form-control'})
+
+        def clean(self):
+            super(MyGenericModelForm, self).clean()
+
+            if 'FROM' and 'TO' in self.fields.keys():
+                _from = self.cleaned_data.get('FROM')
+                _to = self.cleaned_data.get('TO')
+
+                if _from > _to:
+                    raise forms.ValidationError({'FROM': "FROM can't be greather than TO"})
+
+
+    if request.method == "POST":
+        Base = declarative_base()
+        generic_object = type(str(tablename), (Base,), defineObject(table))
+
+        form = MyGenericModelForm(request.POST)
+        if form.is_valid():
+            #db_type = form.cleaned_data.get('db_type')
+            return redirect('mainapp:reflector')
+        else:
+            return render(request,'mainapp/row_add.html',{'form': form})
+        #Object_table = surveytable(BHID = 3.7, at = 'kolx', az = 14.0, dip = 14.0 ,Comments = 'hola')
+        #session.add(Object_table)
+        #session.flush()
+        #session.rollback()
+    else:
+        form = MyGenericModelForm()
+
+    return render(request,'mainapp/row_add.html',{'form': form})
+##end
+
+#------------------End Dinamic Model--------------------#
 
 def index(request):
     response = render(request,
@@ -47,7 +146,7 @@ def open(request):
                 name = form.cleaned_data.get('sqlite_file')
 
                 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                dbName = BASE_DIR+'/smart4.sqlite'
+                dbName = BASE_DIR+'/loloman.sqlite'
                 if dbName != '':
                     engineURL = 'sqlite:///'+dbName
                 #con_string = 'sqlite:///{0}.sqlite'.format(name)
@@ -67,9 +166,6 @@ def open(request):
             cols,tks,data,table_key = update(reflector)
 
             response = render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
-            #expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
-            #response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
-            #response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
             return response
 
     return render(request,'mainapp/open.html',{'form': form})
@@ -161,6 +257,54 @@ def reflector(request, table_key = ''):
 
     return render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
 
+def add_table(request):
+    if request.method in ['GET', 'POST']:
+        #if request.COOKIES.get('db_type') == "sqlite":
+        if request.session.get('db_type') == "sqlite":
+            #con_string = 'sqlite:///{}.sqlite'.format(request.COOKIES.get('db'))
+            con_string = request.session.get('engineURL')
+        #elif request.COOKIES.get('db_type') == "postgresql":
+        elif request.session.get('db_type') == "postgresql":
+            #con_string = 'postgresql://postgres@localhost/{}'.format(request.COOKIES.get('db'))
+            con_string = request.session.get('engineURL')
+        eng, meta = og_connect(con_string)
+    if request.method == 'GET':
+        form = AddTableForm()
+        return render(request,
+                      'mainapp/add_table.html',
+                      {'ref': 'dashboard', 'form': form})
+    elif request.method == 'POST':
+        form = AddTableForm(request.POST)
+        if form.is_valid():
+            if form.cleaned_data.get('table_type') == 'assay_certificate':
+                og_references(eng, meta, table_name=form.cleaned_data.get('name'), key='SampleID', cols={'Au': {'coltypes': Float,
+                                                                                   'nullable': True}})
+            elif form.cleaned_data.get('table_type') == 'rock_catalog':
+                og_references(eng, meta, table_name=form.cleaned_data.get('name'), key='RockID', cols={'Description': {'coltypes': String,
+                                                                                                        'nullable': True}})
+            elif form.cleaned_data.get('table_type') == 'assay':
+                for column in meta.tables['assay_certificate'].columns:
+                    if column.primary_key:
+                        pk = column.key
+                og_add_interval(eng, meta, table_name=form.cleaned_data.get('name'), cols={'SampleID': {'coltypes': String,
+                                                                                  'nullable': False,
+                                                                                  'foreignkey': {'column': '{}.{}'.format(table, pk),
+                                                                                                 'ondelete': 'RESTRICT',
+                                                                                                 'onupdate': 'CASCADE'}}})
+            elif form.cleaned_data.get('table_type') == 'litho':
+                table = form.cleaned_data.get('foreignkey')
+                for column in meta.tables[table].columns:
+                    if column.primary_key:
+                        pk = column.key
+                og_add_interval(eng, meta, table_name=form.cleaned_data.get('name'), cols={'RockID':{'coltypes': String,
+                                                                               'nullable': True,
+                                                                               'foreignkey': {'column': '{}.{}'.format(table, pk),
+                                                                                              'ondelete': 'RESTRICT',
+                                                                                              'onupdate': 'CASCADE'}}})
+            execute(eng, meta)
+        return redirect('mainapp:dashboard')
+
+#--------------------utils----------------------#
 #Define database Object Table
 def defineObject(table):
     columns = table.getColumns()
@@ -245,49 +389,96 @@ def pg_create(user, password, dbname_to_create, host = "localhost", dbname_to_co
                 break
     return str_engine
 
-def add_table(request):
-    if request.method in ['GET', 'POST']:
-        #if request.COOKIES.get('db_type') == "sqlite":
-        if request.session.get('db_type') == "sqlite":
-            #con_string = 'sqlite:///{}.sqlite'.format(request.COOKIES.get('db'))
-            con_string = request.session.get('engineURL')
-        #elif request.COOKIES.get('db_type') == "postgresql":
-        elif request.session.get('db_type') == "postgresql":
-            #con_string = 'postgresql://postgres@localhost/{}'.format(request.COOKIES.get('db'))
-            con_string = request.session.get('engineURL')
-        eng, meta = og_connect(con_string)
-    if request.method == 'GET':
-        form = AddTableForm(meta=meta)
+def fields_generator(table):
+    fields = {}
+    #fields = {
+        #'first_name': models.CharField(max_length=255),
+        #'last_name': models.CharField(max_length=255),
+        #'__unicode__': lambda self: '%s %s' (self.first_name, self.last_name),
+    #}
+    columns = table.getColumns()
+    primary_key = False
+    nullable = False
+    unique = False
+    for column in columns:
+        if column.primary_key:
+            primary_key = True
+        else:
+            primary_key = False
+        if column.nullable:
+            nullable = True
+        else:
+            nullable = False
+        if column.unique:
+            unique = True
+        else:
+            unique = False
+
+        if column.type:
+            col_type = column.type.__visit_name__
+
+        if column.type:
+            try:
+                col_len = column.type.length
+                if col_len == None:
+                    col_len = 255
+            except:
+                col_len = 255
+
+        if col_type in ['FLOAT', 'DOUBLE PRECISION']:
+            fields[column.name] = models.FloatField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+        elif col_type in ['VARCHAR']:
+            fields[column.name] = models.CharField(max_length = col_len, primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+        elif col_type in ['TEXT']:
+            fields[column.name] = models.TextField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+        elif col_type in ['INTEGER']:
+            fields[column.name] = models.IntegerField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+        elif col_type in ['SMALLINT']:
+            fields[column.name] = models.SmallIntegerField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+        elif col_type in ['BOOLEAN']:
+            if nullable:
+                fields[column.name] = models.NullBooleanField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+            else:
+                fields[column.name] = models.BooleanField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+        #else:
+            #fields[column.name] = models.CharField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+
+        #fields['__unicode__'] = lambda self: '%s' (self.name),
+
+    return fields
+#--------------------end utils------------------#
+
+
+def logout_user(request):
+    logout(request)
+
+def signup_user(request):
+    if request.method == 'POST':
+        signup_form = AppUserForm(request.POST)
+        if signup_form.is_valid():
+            new_user = AppUser.objects.create_user(
+                                        username=signup_form.cleaned_data['username'],
+                                        fullname=signup_form.cleaned_data['fullname'],
+                                        email=signup_form.cleaned_data['email'],
+                                        phone=signup_form.cleaned_data['phone'],
+                                        password=signup_form.cleaned_data['password'])
+            return render(request,
+               'mainapp/signup.html',
+               {
+                'signup_form':signup_form,
+               })
+
+        else:
+            return render(request,
+                   'mainapp/signup.html',
+                   {
+                    'signup_form':signup_form,
+                   })
+
+    else:
+        signup_form = AppUserForm()
         return render(request,
-                      'mainapp/add_table.html',
-                      {'ref': 'dashboard', 'form': form})
-    elif request.method == 'POST':
-        form = AddTableForm(request.POST, meta=meta)
-        if form.is_valid():
-            if form.cleaned_data.get('table_type') == 'assay_certificate':
-                og_references(eng, meta, table_name=form.cleaned_data.get('name'), key='SampleID', cols={'Au': {'coltypes': Float,
-                                                                                   'nullable': True}})
-            elif form.cleaned_data.get('table_type') == 'rock_catalog':
-                og_references(eng, meta, table_name=form.cleaned_data.get('name'), key='RockID', cols={'Description': {'coltypes': String,
-                                                                                                        'nullable': True}})
-            elif form.cleaned_data.get('table_type') == 'assay':
-                table = form.cleaned_data.get('foreignkey')
-                for column in meta.tables[table].columns:
-                    if column.primary_key:
-                        pk = column.key
-                og_add_interval(eng, meta, table_name=form.cleaned_data.get('name'), cols={'SampleID': {'coltypes': String,
-                                                                                  'nullable': False,
-                                                                                  'foreignkey': {'column': '{}.{}'.format(table, pk),
-                                                                                                 'ondelete': 'RESTRICT',
-                                                                                                 'onupdate': 'CASCADE'}}})
-            elif form.cleaned_data.get('table_type') == 'litho':
-                for column in meta.tables[table].columns:
-                    if column.primary_key:
-                        pk = column.key
-                og_add_interval(eng, meta, table_name=form.cleaned_data.get('name'), cols={'RockID':{'coltypes': String,
-                                                                               'nullable': True,
-                                                                               'foreignkey': {'column': '{}.{}'.format(table, pk),
-                                                                                              'ondelete': 'RESTRICT',
-                                                                                              'onupdate': 'CASCADE'}}})
-            execute(eng, meta)
-        return redirect('mainapp:dashboard')
+               'mainapp/signup.html',
+               {
+                'signup_form':signup_form,
+               })

@@ -65,6 +65,19 @@ class og_dbTable:
             else:
                 col_def['foreign_key'] = False
             #set a new column info into columns array
+
+            if column.type:
+                col_def['type'] = column.type
+
+            if column.key:
+                col_def['key'] = column.key
+
+            if column.type:
+                try:
+                    col_def['len'] = column.type.length
+                except:
+                    col_def['len'] = "not-set"
+            #set a new column info into columns array
             columns.append(col_def)
 
         return columns

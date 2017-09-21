@@ -1,12 +1,7 @@
 from django import forms
-from sqlalchemy import (create_engine,
-                        Table,
-                        Column,
-                        Float,
-                        String,
-                        MetaData,
-                        ForeignKey,
-                        CheckConstraint)
+from django.forms import ModelForm, TextInput
+from .models import AppUser
+
 DB_TYPE_CHOICES = (
     (u'sqlite', u"SQLite"),
     (u'postgresql', u"PostgreSQL")
@@ -60,11 +55,6 @@ class NewForm(forms.Form):
 
 
 class AddTableForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        meta = kwargs.pop('meta')
-        super(AddTableForm, self).__init__(*args, **kwargs)
-        self.fields['foreignkey'].choices = ((x, x) for x in meta.tables.keys())
-
     name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
                                                          'placeholder': 'Set a name for the table'}))
@@ -72,7 +62,64 @@ class AddTableForm(forms.Form):
                                                               'class': 'form-control'}),
                                    choices=TABLE_TYPE_CHOICES,
                                    label="Table type:")
-    foreignkey = forms.ChoiceField(widget=forms.Select(attrs={'required': False,
-                                                              'class': 'form-control'}),
-                                   choices=[],
-                                   label="ForeignKey:")
+
+#-------------------------------------------------------------------------------------------------------------------
+# override type in phone field
+class PhoneInput(TextInput):
+    input_type = 'tel'
+
+class AppUserForm(ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput(render_value=True,
+                                                          attrs={'required': True,
+                                                                 'class': 'form-control form-control-lg',
+                                                                 'placeholder': 'Create your password'}))
+    confirm_password = forms.CharField(widget=forms.PasswordInput(render_value=True,
+                                                                  attrs={'required': True,
+                                                                         'class': 'form-control form-control-lg',
+                                                                         'placeholder': 'Confirm your password'}))
+
+    phone = forms.CharField(widget=PhoneInput(), required=False)
+
+    class Meta:
+        model = AppUser
+        fields = ['username', 'fullname', 'email', 'phone']
+
+    def __init__(self, *args, **kwargs):
+        super(AppUserForm, self).__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({'class': 'form-control form-control-lg',
+                                                 'placeholder': 'username'})
+
+        self.fields['fullname'].widget.attrs.update({'class': 'form-control form-control-lg',
+                                                 'placeholder': 'full name'})
+
+        self.fields['email'].widget.attrs.update({'class': 'form-control form-control-lg',
+                                                  'placeholder': 'email address'})
+
+        self.fields['phone'].widget.attrs.update({'class': 'form-control form-control-lg',
+                                                  'placeholder': '+999999999',
+                                                  'type': 'phone'})
+
+    def clean(self):
+        password = self.cleaned_data.get('password')
+        confirm_password = self.cleaned_data.get('confirm_password')
+
+        if password and password != confirm_password:
+            raise forms.ValidationError({'confirm_password': "Passwords don't match"})
+
+        return self.cleaned_data
+
+#------------Generic Model Form-----------------#
+class GenericModelForm(ModelForm):
+    class Meta:
+        fields = '__all__'
+
+from django.utils import six
+from django.forms.models import ModelFormMetaclass, BaseModelForm
+
+class MyBaseModelForm(BaseModelForm):
+    def clean(self):
+        self._validate_unique = False
+        return self.cleaned_data
+
+class MyModelForm(six.with_metaclass(ModelFormMetaclass, MyBaseModelForm)):
+    pass

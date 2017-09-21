@@ -27,9 +27,6 @@
       <button type="submit" class="btn btn-success">Open</button>
     </div>
   </form>
-  <div class="">
-    <p>{{url}}</p>
-  </div>
 </div>
 {% endblock %}
 
@@ -62,7 +59,7 @@ $("#id_db_type").change(function(evento){
   }
   else if (this.value == 'sqlite'){
     input_file = "<label id='form_group_file' class='custom-file'>Sqlite file:"+
-      "<input class='custom-file-input' name='sqlite_file' required='' id='id_sqlite_file' type='file'>"+
+      "<input class='custom-file-input' name='sqlite_file' required='required' id='id_sqlite_file' type='file'>"+
       "<span class='custom-file-control'></span>"+
       "{{sqlite_file}}</label>";
 

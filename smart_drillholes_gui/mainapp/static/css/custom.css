@@ -1,6 +1,6 @@
 .left-panel a:hover{
     background: rgba(0,0,0,0.2);
 }
-.left-panel li > ul{
+.left-panel li > ul#left-panel-tables{
     background: rgba(0,0,0,0.1);
 }

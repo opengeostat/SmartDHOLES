@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{% block language %}{% endblock %}" style="height:100%">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gramvi-login</title>
+    <!--Css styles-->
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/font-awesome.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <!--END Css styles-->
+    <script src="{% static 'js/jquery-3.2.1.slim.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/npm.js' %}"></script>
+  </head>
+  <body class="bg-light" style="height:100%;">
+  <div class="container" style="display: table; height:100%; width:100%">
+    <div class="content clearfix" style="display: table-row; height:100%;">
+      <div class="align-middle" style="height:100%;display:table-cell">
+        <div class="clearfix" style="width:100%;max-width:450px;margin-left:auto;margin-right:auto;">
+          <div class="pt-3">
+            <!--<h1>Login</h1>-->
+            <div class="row">
+              <img style="margin-right:auto;margin-left:auto;" src="{% static 'img/opengeostat.png' %}" alt="">
+            </div>
+            <h1 class="text-center">SMART DRILLHOLES<br/> <small class="text-muted">login</small></h1>
+            <span class="text-center d-block pb-2">Dont have an account, <a href="{% url 'mainapp:signup' %}">contact us</a></span>
+          </div>
+          {# Login form #}
+
+            <form method="POST" action="{% url 'login' %}">
+              {% csrf_token %}
+              {% if request.GET.access_denied %}
+              <div class=" alert alert-warning alert-dismissable">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                Your user don't have access to "{{ request.get_host }}{{ request.GET.next }}". Please log in with other user.
+              </div>
+              {% endif %}
+              {% if form.non_field_errors %}
+              <div class=" alert alert-warning alert-dismissable">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{form.non_field_errors|striptags }}
+              </div>
+              {% endif %}
+              {% if form.username.errors %}
+              <div class=" alert alert-warning alert-dismissable">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{form.username.errors|striptags }}
+              </div>
+              {% endif %}
+              <div class="form-group">
+                <input placeholder="username" class="form-control form-control-lg" {{ form.username|cut:"<input"}}
+              </div>
+              {% if form.password.errors %}
+              <div class=" alert alert-warning alert-dismissable">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{form.password.errors|striptags }}
+              </div>
+              {% endif %}
+              <div class="form-group">
+                <input placeholder="password" class="form-control form-control-lg" {{ form.password|cut:"<input"}}
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg btn-block" name="login">Login</button>
+              <a class="btn btn-secondary btn-lg btn-block" href="http://www.opengeostat.com">Cancel</a>
+              <input type="hidden" name="next" value="{{ next }}" />
+            </form>
+
+          {# Login form end #}
+        </div>
+        <div class="col-xs-12 text-center p-2 pt-5 mt-5">
+          <span class="text-muted">&copy 2017. www.opengeostat.com</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
