@@ -1,28 +1,20 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from django.shortcuts import render, redirect
-from smart_drillholes.core import *
-from .forms import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm
-import datetime
-from smart_drillholes_gui import settings
-from django.http import JsonResponse, Http404
+from __future__                 import unicode_literals
+from .forms                     import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Float, exc
-from psycopg2 import ProgrammingError
-# Views
-#from django.views.decorators.csrf import csrf_exempt
-#import json
-from reflector.og_reflector import Reflector
-
+from sqlalchemy                 import Column, String, Float, exc
+from django.shortcuts           import render, redirect
+from django.http                import JsonResponse, Http404
+from reflector.og_reflector     import Reflector
+from smart_drillholes_gui       import settings
+from psycopg2                   import ProgrammingError
+from sqlalchemy                 import create_engine
+from django.contrib             import messages
+from smart_drillholes.core      import *
+from django.urls                import reverse
+import datetime
 import os
 import re
-from django.urls import reverse
-
-from sqlalchemy import create_engine
-
-from django.contrib import messages
-
 
 def index(request):
     response = render(request,
@@ -87,7 +79,7 @@ def new(request):
         form = NewForm(request.POST)
         if form.is_valid():
             if form.cleaned_data.get('db_type') == 'sqlite':
-                con_string = 'sqlite:///{}.sqlite'.format(os.path.join(request.POST.get('current_path'),form.cleaned_data.get('name')))
+                con_string = 'sqlite:///{}.sqlite'.format(os.path.join(request.POST.get('current_path'), form.cleaned_data.get('name')))
             elif form.cleaned_data.get('db_type') == 'postgresql':
                 dbname_to_create = form.cleaned_data.get('name')
                 try:

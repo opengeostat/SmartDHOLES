@@ -50,60 +50,60 @@
 
 <script>
 $(document).ready(function(){
-var previous_path = "/"
-$("#directory_content").on('click', '.path',function(event){
-  event.preventDefault();
-  var element_path = $(this).attr('path');
-  if ($(this).attr('go_back')){
-    var go_to = element_path;
-  } else{
-    var go_to = $("#current_path").val() + element_path;
-  }
-  if ($(this).attr('type') == "folder"){
-    $(".path").removeClass("selected");
-    $.ajax({
-      method: "GET",
-      url: '{% url "mainapp:get_folder_content_in_json" %}',
-      data: {
-        'path': go_to,
-      },
-      dataType: 'json',
-      success: function(data) {
-        if (data.content){
-          $("#directory_content").html("");
-          if (data.content.path != "/"){
-            folder = data.content.previous_path;
-            if (folder != "/"){
-              var slash = "/";
-            } else{
-              var slash = "";
+  $("#directory_content").on('click', '.path',function(event){
+    event.preventDefault();
+    var element_path = $(this).attr('path');
+    if ($(this).attr('go_back')){
+      var go_to = element_path;
+    } else{
+      var go_to = $("#current_path").val() + element_path;
+    }
+    if ($(this).attr('type') == "folder"){
+      $(".path").removeClass("selected");
+      $.ajax({
+        method: "GET",
+        url: '{% url "mainapp:get_folder_content_in_json" %}',
+        data: {
+          'path': go_to,
+        },
+        dataType: 'json',
+        success: function(data) {
+          if (data.content){
+            $("#directory_content").html("");
+            if (data.content.path != "/"){
+              folder = data.content.previous_path; // path doesn't have slash at the end so can lead to some unexpected behavior
+              if (folder != "/"){
+                var slash = "/";
+              } else{
+                var slash = "";
+              }
+              html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" go_back=\"true\" type=\"folder\" path=\""+ folder + slash +"\"><i class=\"fa fa-folder-open mr-1\"></i>...</a>"
+              $("#directory_content").append(html_element);
             }
-            html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" go_back=\"true\" type=\"folder\" path=\""+ folder + slash +"\"><i class=\"fa fa-folder-open mr-1\"></i>...</a>"
-            $("#directory_content").append(html_element);
+            for(var folder in data.content.folders){
+              folder = data.content.folders[folder];
+              html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" type=\"folder\" path=\""+ folder +"/\"><i class=\"fa fa-folder mr-1\"></i>"+ folder +"</a>"
+              $("#directory_content").append(html_element);
+            }
+            for(var file in data.content.files){
+              file = data.content.files[file];
+              html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" type=\"file\" path=\""+ file +"\"><i class=\"fa fa-file mr-1\"></i>"+ file +"</a>"
+              $("#directory_content").append(html_element);
+            }
+            $("#current_path").val(go_to);
+            $("#current_path_display").html(go_to);
+            $("#selected_file").val("");
           }
-          for(var folder in data.content.folders){
-            folder = data.content.folders[folder];
-            html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" type=\"folder\" path=\""+ folder +"/\"><i class=\"fa fa-folder mr-1\"></i>"+ folder +"</a>"
-            $("#directory_content").append(html_element);
-          }
-          for(var file in data.content.files){
-            file = data.content.files[file];
-            html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" type=\"file\" path=\""+ file +"\"><i class=\"fa fa-file mr-1\"></i>"+ file +"</a>"
-            $("#directory_content").append(html_element);
-          }
-          $("#current_path").val(go_to);
-          $("#current_path_display").html(go_to);
-          $("#selected_file").val("");
         }
-      }
 
-    });
-  } else{
-    $(".path").removeClass("selected");
-    $(this).addClass("selected");
-    $("#selected_file").val($(this).attr("path"));
-  }
-});
+      });
+    } else{
+      /* add class "selected" when user click a file */
+      $(".path").removeClass("selected");
+      $(this).addClass("selected");
+      $("#selected_file").val($(this).attr("path"));
+    }
+  });
 });
 
 </script>

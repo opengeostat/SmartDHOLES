@@ -91,7 +91,6 @@ $("#id_db_type").change(function(evento){
     $("#files_explorer").removeClass("d-none");
   }
 });
-var previous_path = "/"
 $("#directory_content").on('click', '.path',function(event){
   event.preventDefault();
   var element_path = $(this).attr('path');
@@ -113,7 +112,7 @@ $("#directory_content").on('click', '.path',function(event){
         if (data.content){
           $("#directory_content").html("");
           if (data.content.path != "/"){
-            folder = data.content.previous_path;
+            folder = data.content.previous_path; // path doesn't have slash at the end so can lead to some unexpected behavior
             if (folder != "/"){
               var slash = "/";
             } else{
@@ -140,6 +139,7 @@ $("#directory_content").on('click', '.path',function(event){
 
     });
   } else{
+    /* add class "selected" when user click a file */
     $(".path").removeClass("selected");
     $(this).addClass("selected");
     $("#selected_file").val($(this).attr("path"));
