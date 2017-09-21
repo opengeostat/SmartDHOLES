@@ -1,8 +1,11 @@
 {% extends 'mainapp/base.html' %}
 {% load staticfiles %}
+{% block title %}Tables|{{ table_key }}{% endblock %}
 {% block content %}
 <div class="row flex-xl-nowrap row-eq-height">
+
 <div class="col-12 col-md-3 col-xl-3 bd-sidebar bg-dark p-0" role="navigation" id="left-panel">
+
       <ul class="nav flex-column left-panel">
         <li class="nav-item left-panel-droopdown clearfix" status="closed">
           <a class="nav-link text-light" href="#">
@@ -10,40 +13,37 @@
           </a>
         </li>
 
-          <ul id="left-panel-tables" class="nav flex-column" style="display:none" role="menu">
-            {% for table_name in tks %}
-            <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-light" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
-            {% endfor %}
-          </ul>
-
-        <li class="nav-item"><a class="nav-link text-light" href="{% url 'mainapp:add_table' %}">Add Table</a></li>
+        <ul id="left-panel-tables" class="nav flex-column" style="display:none" role="menu">
+          {% for table_name in tks %}
+          <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-light" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
+          {% endfor %}
+        </ul>
         <li class="nav-item"><a class="nav-link text-light" href="#">Remove Table</a></li>
       </ul>
 </div>
-<div class="col-12 col-md-9">
-  <div class="pull-right" style="padding-bottom:30px;">
-    <a href="{% url 'mainapp:generic_add' table_key %}" class="btn btn-success"><span class="fa fa-ok"></span> New</a>
-  </div>
-
-  <form action="." method="post">
+<div class="col-12 col-lg-9 col-xl-10">
+  <form action="." method="post" class="pb-2 clearfix">
 {% csrf_token %}
 <input type="hidden" name="tablename" value={{ table_key }}>
-  <div style="margin-top:20px;">
-  <table class="table table-condensed table-hover table-bordered table-striped table-responsive">
-  <caption>smart drillholes table: <strong>{{table_key}}</strong></caption>
-  <thead class="thead-inverse">
+  <div class="table-responsive">
+  <h6 class="text-muted mt-2 pull-left">smart drillholes table: <strong>{{table_key}}</strong></h6>
+  <button type="submit" id="btnsave"  class="btn btn-success btn-sm pull-right my-2"><span class="fa fa-check"></span> Save</button>
+  <table class="table table-sm table-bordered table-striped" id="DB_Table">
+  <thead class="table-inverse">
+
   <tr>
   {% for col in cols %}
   <th>
       {{ col.name }}
-      {{ col.type }}
-      {% if col.primary_key %}<span><img src="{% static 'img/pk.png' %}" class="img-responsive" alt="primarykey image"></span>{% endif %}
-      {% if col.foreign_key %}<span><img src="{% static 'img/fk.png' %}" class="img-responsive" alt="foreignkey image"></span>{% endif %}
+
+      {% if col.primary_key %}<span class="fa fa-key text-warning"></span>{% endif %}
+      {% if col.foreign_key %}<span class="fa fa-key text-danger"></span>{% endif %}
+
       {% if col.unique %}U{% endif %}
       {% if col.nullable %}N{% endif %}
   </th>
   {% endfor %}
-  <th><i class="fa fa-trash"></i></th>
+  <th><span class="fa fa-trash"></span></th>
   </tr>
   </thead>
   <tbody>
@@ -54,8 +54,8 @@
       {{ d }}
     </td>
       {% endfor %}
-      <td>
-        <label class="custom-control custom-checkbox">
+      <td style="width:1%">
+        <label class="custom-control custom-checkbox m-0 p-2">
         <input name="checkbox-delete" value="{{ dat.pks }}" type="checkbox" class="custom-control-input">
         <span class="custom-control-indicator"></span>
         </label>
@@ -66,11 +66,7 @@
   </tbody>
   </table>
   </div>
-
-  <div class="pull-right" style="padding-bottom:30px;">
-    <button type="submit" id="btnsave"  class="btn btn-success"><span class="glyphicon glyphicon-ok"></span> Save</button>
-  </div>
-
+    <button type="submit" id="btnsave"  class="btn btn-success btn-sm pull-right"><span class="fa fa-check"></span> Save</button>
     </form>
 
 </div>
@@ -103,6 +99,14 @@ $(".left-panel-droopdown").click(function(evento){
     $(this).attr('status','closed');
   }
 });
+$("#DB_Table").dataTable({
+  paging:false,
+  columnDefs: [
+                { orderable: false, targets: -1 }
+              ],
+});
+$("#DB_Table_filter input").addClass("form-control form-control-sm mx-2");
+$("#DB_Table_filter").addClass("form-inline mt-2 clearfix float-right");
 });
 </script>
 {% endblock javascript %}

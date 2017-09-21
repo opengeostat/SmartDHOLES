@@ -1,31 +1,23 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
-from django.shortcuts import render, redirect
-from smart_drillholes.core import *
-from .forms import MyModelForm, OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, AppUserForm, GenericModelForm
-import datetime
+from __future__                 import unicode_literals
+from .forms                     import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, MyModelForm, AppUserForm, GenericModelForm
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Float, exc
-from psycopg2 import ProgrammingError
-
-from django import forms
-
-# Views
-#from django.views.decorators.csrf import csrf_exempt
-#import json
-from reflector.og_reflector import Reflector
-
+from sqlalchemy                 import Column, String, Float, exc
+from django.shortcuts           import render, redirect
+from django.http                import JsonResponse, Http404
+from reflector.og_reflector     import Reflector
+from smart_drillholes_gui       import settings
+from psycopg2                   import ProgrammingError
+from sqlalchemy                 import create_engine
+from django.contrib             import messages
+from smart_drillholes.core      import *
+from django.urls                import reverse
+import datetime
 import os
 import re
-from django.urls import reverse
-
-from sqlalchemy import create_engine
-
-from django.contrib import messages
-
+from django.db                  import models
 #------------------Dinamic Model------------------------#
-from django.db import models
 def create_model(name, attrs={}, meta_attrs={}, module_path='django.db.models'):
     attrs['__module__'] = module_path
     class Meta:
@@ -38,35 +30,6 @@ def create_model(name, attrs={}, meta_attrs={}, module_path='django.db.models'):
     return type(str(name), (models.Model,), attrs)
 
 ##dinamic test
-#@csrf_exempt
-def insert(request, table_key = ''):
-    engineURL = request.session.get('engineURL')
-    reflector = Reflector(engineURL)
-    reflector.reflectTables()
-
-    if request.method == 'POST':
-        pks = request.POST.getlist('checkbox-delete')
-        pp = []
-        for i,pk in enumerate(pks):
-            pks[i] = pk.split(',')
-        table_key = str(request.POST['tablename'])
-        Base = declarative_base()
-        table = reflector.getOg_table(str(table_key))
-
-        object_table = type(str(table_key), (Base,), defineObject(table))
-
-        if pks:
-            session = reflector.make_session()
-            for pk in pks:
-                query = session.query(object_table).get(pk)
-                session.delete(query)
-                session.commit()
-            session.close()
-
-    cols,tks,data,table_key = update(reflector, table_key)
-
-    return render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
-
 def generic_add(request, tablename):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
@@ -132,21 +95,24 @@ def index(request):
 def open(request):
     if request.method == "GET":
         form = OpenSQliteForm()
-
     elif request.method == "POST":
         if request.POST['db_type'] == "postgresql":
             form = OpenPostgresForm(request.POST)
         elif request.POST['db_type'] == "sqlite":
-            form = OpenSQliteForm(request.POST, request.FILES)
-        if form.is_valid():
-            db_type = form.cleaned_data.get('db_type')
+            if not settings.files_explorer:
+                form = OpenSQliteForm(request.POST, request.FILES)
+            db_type = request.POST.get('db_type')
             if db_type == 'sqlite':
+                if settings.files_explorer:
+                    dbName = os.path.join(request.POST.get('current_path'),request.POST.get('selected_file'))
+                else:
+                    if form.is_valid():
+                        urlfile = request.FILES["sqlite_file"]
+                        name = form.cleaned_data.get('sqlite_file')
+                        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                        dbName = BASE_DIR+'/smart4.sqlite'
                 #content_type: application/octet-stream
-                urlfile = request.FILES["sqlite_file"]
-                name = form.cleaned_data.get('sqlite_file')
 
-                BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                dbName = BASE_DIR+'/loloman.sqlite'
                 if dbName != '':
                     engineURL = 'sqlite:///'+dbName
                 #con_string = 'sqlite:///{0}.sqlite'.format(name)
@@ -167,8 +133,7 @@ def open(request):
 
             response = render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
             return response
-
-    return render(request,'mainapp/open.html',{'form': form})
+    return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
 
 def new(request):
     if request.method == "GET":
@@ -176,12 +141,12 @@ def new(request):
         return render(request,
                       'mainapp/new.html',
                       {'form': form,
-                       'ref': 'new'})
+                       'ref': 'new', 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
     elif request.method == "POST":
         form = NewForm(request.POST)
         if form.is_valid():
             if form.cleaned_data.get('db_type') == 'sqlite':
-                con_string = 'sqlite:///{}.sqlite'.format(form.cleaned_data.get('name'))
+                con_string = 'sqlite:///{}.sqlite'.format(os.path.join(request.POST.get('current_path'), form.cleaned_data.get('name')))
             elif form.cleaned_data.get('db_type') == 'postgresql':
                 dbname_to_create = form.cleaned_data.get('name')
                 try:
@@ -482,3 +447,26 @@ def signup_user(request):
                {
                 'signup_form':signup_form,
                })
+
+def get_folder_content_in_json(request):
+    if settings.files_explorer:
+        content = get_folder_content(request.GET.get('path'))
+        return JsonResponse({'content': content})
+    else:
+        return Http404('You don\'t have access to this function')
+def get_folder_content(path=None):
+    files = []
+    folders = []
+    if not path:
+        path = "/"
+    try:
+        content = os.listdir(path)
+        for element in content:
+            element_path = os.path.join(path, element)
+            if os.path.isfile(element_path):
+                files.append(element)
+            elif os.path.isdir(element_path) and os.access(element_path, os.R_OK):
+                folders.append(element)
+    except OSError:
+        return False
+    return {"files":files,"folders":folders,"path":path,"previous_path":os.path.dirname(os.path.dirname(path))}

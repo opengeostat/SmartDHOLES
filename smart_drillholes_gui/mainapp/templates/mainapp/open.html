@@ -1,33 +1,49 @@
 {% extends 'mainapp/base.html' %}
 {% load staticfiles %}
+{% block title %}SmartDHOLES|Open DB{% endblock %}
 {% block content %}
 <div class="col-md-6 mx-auto">
 {% if form.errors %}{{form.errors}}{% endif %}
 
   <form id="formid" method="POST" action="{% url 'mainapp:open' %}" enctype="multipart/form-data">
     {% csrf_token %}
-
+      <input hidden value="/" id="current_path" name="current_path"/>
+      <input hidden id="selected_file" name="selected_file"/>
       <div class="form-group mt-2" id="dbtype">
-        <label for="id_db_type">Database type:</label>
-        <select name="db_type" required="" class="form-control" id="id_db_type">
-          <option id="sqlite" value="sqlite">SQLite</option>
-          <option id="postgres" value="postgresql">PostgreSQL</option>
-        </select>
+        {{ form.db_type.label_tag }}
+        {{ form.db_type }}
       </div>
-
+      {% if not files_explorer %}
       <label id="form_group_file" class="custom-file">Sqlite file:
-        <input class="custom-file-input" name="sqlite_file" required="" id="id_sqlite_file" type="file">
+        {{ form.sqlite_file }}
         <span class="custom-file-control"></span>
-        {{sqlite_file}}
       </label>
-
-
+      {% endif %}
     <div id="btns" class="text-right mt-2">
       <a href="{% url 'mainapp:index' %}" class="btn btn-danger">Cancel</a>
       <button type="submit" class="btn btn-success">Open</button>
     </div>
   </form>
 </div>
+{# files_explorer#}
+{% if files_explorer %}
+  <div class="card mt-3" id="files_explorer">
+    <div class="card-header">
+      <h6 id="current_path_display">/</h6>
+    </div>
+    <div class="card-body">
+      <div class="row" id="directory_content">
+        {% for folder in directory_content.folders %}
+          <a class="col-lg-3 col-md-4 col-sm-6 d-block path" path="{{ folder }}/" type="folder"><i class="fa fa-folder mr-1"></i>{{ folder }}</a>
+        {% endfor %}
+        {% for file in directory_content.files %}
+          <a class="col-lg-3 col-md-4 col-sm-6 d-block path" path="{{ file }}" type="file"><i class="fa fa-file mr-1"></i>{{ file }}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{# files_explorer end #}
 {% endblock %}
 
 {% block javascript %}
@@ -56,23 +72,81 @@ $("#id_db_type").change(function(evento){
     $('#formid div#btns').before(input_name);
     $('#formid div#btns').before(input_user);
     $('#formid div#btns').before(input_password);
+    $("#files_explorer").addClass("d-none");
+
   }
   else if (this.value == 'sqlite'){
+    {% if not files_explorer %}
     input_file = "<label id='form_group_file' class='custom-file'>Sqlite file:"+
+
       "<input class='custom-file-input' name='sqlite_file' required='required' id='id_sqlite_file' type='file'>"+
       "<span class='custom-file-control'></span>"+
       "{{sqlite_file}}</label>";
 
     $('#formid div#btns').before(input_file);
+    {% endif %}
+
     $('div#form_group_host').remove();
     $('div#form_group_name').remove();
     $('div#form_group_user').remove();
     $('div#form_group_password').remove();
-
+    $("#files_explorer").removeClass("d-none");
   }
 });
+$("#directory_content").on('click', '.path',function(event){
+  event.preventDefault();
+  var element_path = $(this).attr('path');
+  if ($(this).attr('go_back')){
+    var go_to = element_path;
+  } else{
+    var go_to = $("#current_path").val() + element_path;
+  }
+  if ($(this).attr('type') == "folder"){
+    $(".path").removeClass("selected");
+    $.ajax({
+      method: "GET",
+      url: '{% url "mainapp:get_folder_content_in_json" %}',
+      data: {
+        'path': go_to,
+      },
+      dataType: 'json',
+      success: function(data) {
+        if (data.content){
+          $("#directory_content").html("");
+          if (data.content.path != "/"){
+            folder = data.content.previous_path; // path doesn't have slash at the end so can lead to some unexpected behavior
+            if (folder != "/"){
+              var slash = "/";
+            } else{
+              var slash = "";
+            }
+            html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" go_back=\"true\" type=\"folder\" path=\""+ folder + slash +"\"><i class=\"fa fa-folder-open mr-1\"></i>...</a>"
+            $("#directory_content").append(html_element);
+          }
+          for(var folder in data.content.folders){
+            folder = data.content.folders[folder];
+            html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" type=\"folder\" path=\""+ folder +"/\"><i class=\"fa fa-folder mr-1\"></i>"+ folder +"</a>"
+            $("#directory_content").append(html_element);
+          }
+          for(var file in data.content.files){
+            file = data.content.files[file];
+            html_element = "<a class=\"col-lg-3 col-md-4 col-sm-6 d-block path\" type=\"file\" path=\""+ file +"\"><i class=\"fa fa-file mr-1\"></i>"+ file +"</a>"
+            $("#directory_content").append(html_element);
+          }
+          $("#current_path").val(go_to);
+          $("#current_path_display").html(go_to);
+          $("#selected_file").val("");
+        }
+      }
 
-
+    });
+  } else{
+    /* add class "selected" when user click a file */
+    $(".path").removeClass("selected");
+    $(this).addClass("selected");
+    $("#selected_file").val($(this).attr("path"));
+  }
+});
 });
 
 </script>

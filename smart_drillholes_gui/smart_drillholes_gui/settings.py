@@ -27,6 +27,8 @@ SECRET_KEY = 'a)!by0mpo@1g50v_&q!s!@h56(g4ky*i!phi&0+rwne+&ge#xq'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+files_explorer = True  # if True user will be able to find SQLite files locally and create new ones
+
 ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ('127.0.0.1',)
 
