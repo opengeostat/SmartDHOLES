@@ -1,5 +1,5 @@
-{% load static %}
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
   <head>
     <title>{% block title %}{% endblock %}</title>
@@ -18,7 +18,7 @@
   <body>
 
     <nav class="navbar navbar-dark navbar-expand-lg bg-info">
-      <div class="container">
+      <div class="container-fluid">
         <div class="navbar-header">
           <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
             <span class="navbar-toggler-icon"></span>
@@ -29,7 +29,6 @@
           <ul class="nav navbar-nav">
             <li{% if ref == 'new' %} class="nav-item"{% endif %}><a class="nav-link" href="{% url 'mainapp:new' %}">New</a></li>
             <li{% if ref == 'open' %} class="nav-item"{% endif %}><a class="nav-link" href="{% url 'mainapp:open' %}">Open</a></li>
-            <li {% if ref == 'new' %} class="nav-item pull-sm-right"{% endif %}><a class="nav-link" href="{% url 'mainapp:new' %}">Logout</a></li>
           </ul>
         </div><!--/.nav-collapse -->
 

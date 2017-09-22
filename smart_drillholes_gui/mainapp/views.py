@@ -96,43 +96,44 @@ def open(request):
     if request.method == "GET":
         form = OpenSQliteForm()
     elif request.method == "POST":
-        if request.POST['db_type'] == "postgresql":
-            form = OpenPostgresForm(request.POST)
-        elif request.POST['db_type'] == "sqlite":
-            if not settings.files_explorer:
+        db_type = request.POST.get('db_type')
+        if db_type == 'sqlite':
+            if settings.files_explorer:
+                dbName = os.path.join(request.POST.get('current_path'),request.POST.get('selected_file'))
+            else:
                 form = OpenSQliteForm(request.POST, request.FILES)
-            db_type = request.POST.get('db_type')
-            if db_type == 'sqlite':
-                if settings.files_explorer:
-                    dbName = os.path.join(request.POST.get('current_path'),request.POST.get('selected_file'))
-                else:
-                    if form.is_valid():
-                        urlfile = request.FILES["sqlite_file"]
-                        name = form.cleaned_data.get('sqlite_file')
-                        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                        dbName = BASE_DIR+'/smart4.sqlite'
-                #content_type: application/octet-stream
+                if form.is_valid():
+                    urlfile = request.FILES["sqlite_file"]
+                    name = form.cleaned_data.get('sqlite_file')
+                    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                    dbName = BASE_DIR+'/smart4.sqlite'
+            #content_type: application/octet-stream
 
-                if dbName != '':
-                    engineURL = 'sqlite:///'+dbName
-                #con_string = 'sqlite:///{0}.sqlite'.format(name)
-                con_string = engineURL
-            elif db_type == 'postgresql':
+            if dbName != '':
+                engineURL = 'sqlite:///'+dbName
+            #con_string = 'sqlite:///{0}.sqlite'.format(name)
+            con_string = engineURL
+        elif db_type == 'postgresql':
+            form = OpenPostgresForm(request.POST)
+            if form.is_valid():
                 host = form.cleaned_data.get('host')
                 dbname = form.cleaned_data.get('name')
                 user = form.cleaned_data.get('user')
                 password = form.cleaned_data.get('password')
                 con_string = 'postgresql://{2}:{3}@{0}/{1}'.format(host,dbname,user,password)
 
-            request.session['engineURL'] = con_string
-            request.session['db_type'] = db_type
+        request.session['engineURL'] = con_string
+        request.session['db_type'] = db_type
 
-            reflector = Reflector(con_string)
-            reflector.reflectTables()
-            cols,tks,data,table_key = update(reflector)
+        reflector = Reflector(con_string)
+        reflector.reflectTables()
+        cols,tks,data,table_key = update(reflector)
 
-            response = render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
-            return response
+        return redirect('mainapp:reflector', table_key)
+        #expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
+        #response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
+        #response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
+        #return responseyy
     return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
 
 def new(request):
