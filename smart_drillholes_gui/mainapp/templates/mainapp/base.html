@@ -31,10 +31,14 @@
             <li{% if ref == 'open' %} class="nav-item"{% endif %}><a class="nav-link" href="{% url 'mainapp:open' %}">Open</a></li>
           </ul>
         </div><!--/.nav-collapse -->
-
         <div id="navbar" class="collapse navbar-collapse justify-content-end">
           <ul class="nav navbar-nav">
-            <li {% if ref == 'new' %} class="nav-item pull-sm-right"{% endif %}><a class="nav-link" href="{% url 'mainapp:new' %}">Logout</a></li>
+            {% if user.is_authenticated %}
+            <li {% if ref == 'new' %} class="nav-item pull-sm-right"{% endif %}><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
+            {% else %}
+            <li class="nav-item pull-sm-right">{{ user.name }}</li>
+            <li class="nav-item pull-sm-right"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+            {% endif %}
           </ul>
         </div><!--/.nav-collapse -->
       </div>

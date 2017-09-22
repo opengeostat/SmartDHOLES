@@ -27,7 +27,7 @@
               <img style="margin-right:auto;margin-left:auto;" src="{% static 'img/opengeostat.png' %}" alt="">
             </div>
             <h1 class="text-center">SMART DRILLHOLES<br/> <small class="text-muted">login</small></h1>
-            <span class="text-center d-block pb-2">Dont have an account, <a href="{% url 'mainapp:signup' %}">contact us</a></span>
+            <span class="text-center d-block pb-2">Dont have an account, <a href="{% url 'mainapp:signup' %}">sign up</a>.</span>
           </div>
           {# Login form #}
 
@@ -64,14 +64,14 @@
                 <input placeholder="password" class="form-control form-control-lg" {{ form.password|cut:"<input"}}
               </div>
               <button type="submit" class="btn btn-primary btn-lg btn-block" name="login">Login</button>
-              <a class="btn btn-secondary btn-lg btn-block" href="http://www.opengeostat.com">Cancel</a>
+              <a class="btn btn-secondary btn-lg btn-block" href="{% url 'mainapp:index' %}">Cancel</a>
               <input type="hidden" name="next" value="{{ next }}" />
             </form>
 
           {# Login form end #}
         </div>
-        <div class="col-xs-12 text-center p-2 pt-5 mt-5">
-          <span class="text-muted">&copy 2017. www.opengeostat.com</span>
+        <div class="col-xs-12 text-center pt-2">
+          <span class="text-muted">By <a href="http://opengeostat.com/">Opengeostat</a></span>
         </div>
       </div>
     </div>
