@@ -15,16 +15,16 @@ TABLE_TYPE_CHOICES = (
 
 
 class OpenPostgresForm(forms.Form):
-    host = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+    db_host = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
                                                          'placeholder': 'host'}))
-    name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+    db_name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
                                                          'placeholder': 'database'}))
-    user = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+    db_user = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
-                                                         'placeholder': 'username'}))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={'required': True,
+                                                         'placeholder': 'DB user'}))
+    db_password = forms.CharField(widget=forms.PasswordInput(attrs={'required': True,
                                                          'class': 'form-control',
                                                          'placeholder': 'password'}))
     db_type = forms.ChoiceField(widget=forms.Select(attrs={'required': True,

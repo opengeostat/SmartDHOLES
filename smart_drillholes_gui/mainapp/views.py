@@ -116,12 +116,13 @@ def open(request):
         elif db_type == 'postgresql':
             form = OpenPostgresForm(request.POST)
             if form.is_valid():
-                host = form.cleaned_data.get('host')
-                dbname = form.cleaned_data.get('name')
-                user = form.cleaned_data.get('user')
-                password = form.cleaned_data.get('password')
+                host = form.cleaned_data.get('db_host')
+                dbname = form.cleaned_data.get('db_name')
+                user = form.cleaned_data.get('db_user')
+                password = form.cleaned_data.get('db_password')
                 con_string = 'postgresql://{2}:{3}@{0}/{1}'.format(host,dbname,user,password)
-
+            else:
+                return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
         request.session['engineURL'] = con_string
         request.session['db_type'] = db_type
 

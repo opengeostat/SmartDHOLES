@@ -50,22 +50,20 @@
 
 <script>
 $(document).ready(function(){
-$('option#sqlite').attr('selected',"selected");
-$("#id_db_type").change(function(evento){
-  if(this.value == 'postgresql'){
+  function postgresql(){
     var  input_host = "<div id='form_group_host' class='form-group'>"+
-              "<label for='id_host'>Host:</label>"+
-              "<input required name='host' placeholder='host' value='localhost' class='form-control' id='id_host' type='text'>"+
+              "<label for='id_db_host'>Host:</label>"+
+              "<input required name='db_host' placeholder='host' value='localhost' class='form-control' id='id_db_host' type='text'>"+
               "<p class='help-block'>localhost is set to default host.</p></div>"
   var  input_name = "<div id='form_group_name' class='form-group'>"+
-            "<label for='id_name'>Name:</label>"+
-            "<input required name='name' placeholder='database' class='form-control' id='id_name' type='text'></div>"
+            "<label for='id_db_name'>Name:</label>"+
+            "<input required name='db_name' placeholder='database' class='form-control' id='id_db_name' type='text'></div>"
   var  input_user = "<div id='form_group_user' class='form-group'>"+
-            "<label for='id_user'>User:</label>"+
-            "<input required name='user' placeholder='username' class='form-control' id='id_user' type='text'></div>"
+            "<label for='id_db_user'>User:</label>"+
+            "<input required name='db_user' placeholder='DB user' class='form-control' id='id_db_user' type='text'></div>"
   var  input_password = "<div id='form_group_password' class='form-group'>"+
-              "<label for='id_password'>Password:</label>"+
-              "<input required name='password' placeholder='password' class='form-control' id='id_password' type='password'></div>"
+              "<label for='id_db_password'>Password:</label>"+
+              "<input required name='db_password' placeholder='password' class='form-control' id='id_db_password' type='password'></div>"
 
     $('#form_group_file').remove();
     $('#formid div#btns').before(input_host);
@@ -73,7 +71,14 @@ $("#id_db_type").change(function(evento){
     $('#formid div#btns').before(input_user);
     $('#formid div#btns').before(input_password);
     $("#files_explorer").addClass("d-none");
-
+  }
+$('option#sqlite').attr('selected',"selected");
+if ($("#id_db_type").val() == "postgresql"){
+  postgresql();
+}
+$("#id_db_type").change(function(evento){
+  if(this.value == 'postgresql'){
+    postgresql();
   }
   else if (this.value == 'sqlite'){
     {% if not files_explorer %}
