@@ -63,11 +63,6 @@ class AddTableForm(forms.Form):
                                    choices=TABLE_TYPE_CHOICES,
                                    label="Table type:")
 
-#-------------------------------------------------------------------------------------------------------------------
-# override type in phone field
-class PhoneInput(TextInput):
-    input_type = 'tel'
-
 class AppUserForm(ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(render_value=True,
                                                           attrs={'required': True,
@@ -78,11 +73,9 @@ class AppUserForm(ModelForm):
                                                                          'class': 'form-control form-control-lg',
                                                                          'placeholder': 'Confirm your password'}))
 
-    phone = forms.CharField(widget=PhoneInput(), required=False)
-
     class Meta:
         model = AppUser
-        fields = ['username', 'fullname', 'email', 'phone']
+        fields = ['username', 'fullname']
 
     def __init__(self, *args, **kwargs):
         super(AppUserForm, self).__init__(*args, **kwargs)
@@ -91,13 +84,6 @@ class AppUserForm(ModelForm):
 
         self.fields['fullname'].widget.attrs.update({'class': 'form-control form-control-lg',
                                                  'placeholder': 'full name'})
-
-        self.fields['email'].widget.attrs.update({'class': 'form-control form-control-lg',
-                                                  'placeholder': 'email address'})
-
-        self.fields['phone'].widget.attrs.update({'class': 'form-control form-control-lg',
-                                                  'placeholder': '+999999999',
-                                                  'type': 'phone'})
 
     def clean(self):
         password = self.cleaned_data.get('password')
