@@ -64,9 +64,9 @@
                 <input placeholder="password" class="form-control form-control-lg" {{ form.password|cut:"<input"}}
               </div>
               <button type="submit" class="btn btn-primary btn-lg btn-block" name="login">Login</button>
+
               <a class="btn btn-secondary btn-lg btn-block" href="{% url 'mainapp:index' %}">Cancel</a>
-              <input type="hidden" name="next" value="{{ next }}" />
-            </form>
+              <input type="hidden" name="next" value="{{ next }}" />            </form>
 
           {# Login form end #}
         </div>

@@ -1,15 +1,31 @@
 {% extends 'mainapp/base.html' %}
 {% load staticfiles %}
 {% block content %}
-<div class="col-md-6 mx-auto">
-{% if form.errors %}{{form.errors}}{% endif %}
+<div class="col-md-6 mx-auto" style="margin-top:20px; margin-bottom:20px;">
+
+{% if form.non_field_errors %}
+{% for error in form.non_field_errors %}
+<div class="form-group">
+  <div class=" alert alert-warning alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ error|striptags }}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if messages %}
+{% for message in messages %}
+<div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
 
   <form id="formid" method="POST" action="." enctype="multipart/form-data" style="margin-top:20px;">
     {% csrf_token %}
 
-    {% csrf_token %}
-
-        {{ form.id }}
         {% for field in form  %}
         {% if field.errors %}
         <div class="form-group">
@@ -28,9 +44,8 @@
         </div>
         {% endfor %}
 
-
     <div id="btns" class="text-right mt-2">
-      <a href="{% url 'mainapp:dashboard' %}" class="btn btn-danger">Cancel</a>
+      <a href="{% url 'mainapp:reflector' table_key %}" class="btn btn-danger">Cancel</a>
       <button type="submit" class="btn btn-success">Save</button>
     </div>
   </form>
