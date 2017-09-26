@@ -17,6 +17,9 @@ import datetime
 import os
 import re
 from django.db                  import models
+from django                     import forms
+from psycopg2 import            IntegrityError
+
 #------------------Dinamic Model------------------------#
 def create_model(name, attrs={}, meta_attrs={}, module_path='django.db.models'):
     attrs['__module__'] = module_path
@@ -30,13 +33,13 @@ def create_model(name, attrs={}, meta_attrs={}, module_path='django.db.models'):
     return type(str(name), (models.Model,), attrs)
 
 ##dinamic test
-def generic_add(request, tablename):
+def generic_add(request, table_key):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
     reflector.reflectTables()
 
 
-    table = reflector.getOg_table(str(tablename))
+    table = reflector.getOg_table(str(table_key))
     fields = fields_generator(table)
 
     from django.forms import ModelForm
@@ -60,28 +63,63 @@ def generic_add(request, tablename):
                 _from = self.cleaned_data.get('FROM')
                 _to = self.cleaned_data.get('TO')
 
-                if _from > _to:
-                    raise forms.ValidationError({'FROM': "FROM can't be greather than TO"})
+                if _from >= _to:
+                    raise forms.ValidationError({'FROM': "FROM can't be greather or igual than TO"})
 
 
     if request.method == "POST":
         Base = declarative_base()
-        generic_object = type(str(tablename), (Base,), defineObject(table))
+        generic_object = type(str(table_key), (Base,), defineObject(table))
 
         form = MyGenericModelForm(request.POST)
         if form.is_valid():
-            #db_type = form.cleaned_data.get('db_type')
-            return redirect('mainapp:reflector')
+            data = form.cleaned_data
+
+            #Example:
+            #Object_table = surveytable(BHID = 3.7, at = '2.0', az = 14.0, dip = 14.0 ,Comments = 'hello')
+            #session.add(Object_table)
+
+            session = reflector.make_session()
+            Object_table = generic_object(**data)
+            session.add(Object_table)
+            try:
+                session.commit()
+                #session.flush()
+            except exc.IntegrityError as err:
+                # (psycopg2.IntegrityError) insert or update on table "assay" violates foreign key constraint "chk_bhid"
+                # DETAIL:  Key (BHID)=(fddf) is not present in table "collar".
+                session.rollback()
+                if "violates foreign key constraint" in str(err):
+                    m = re.search('(DETAIL:)[\w|\s|\(|\)\|=|"]+\W', str(err))
+                    m = str(m.group(0)).partition("DETAIL:")
+                    messages.add_message(request, messages.WARNING, m[2])
+                    messages.add_message(request, messages.INFO, 'Please verify all foreign key constraints.')
+                    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key})
+                elif "duplicate key value violates unique constraint" in str(err):
+                    m = re.search('(DETAIL:)[\w|\s|\(|\)\|=|"|,]+\W', str(err))
+                    m = str(m.group(0)).partition("DETAIL:")
+                    messages.add_message(request, messages.WARNING, m[2])
+                    messages.add_message(request, messages.INFO, 'Please verify all unique constraints.')
+                    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key})
+                else:
+                    raise
+            except:
+                raise
+            finally:
+                session.close()
+
+            # session.commit()
+            # session.close()
+            return redirect(reverse('mainapp:reflector', kwargs={'table_key': table_key}))
+
+            #return render(request,'mainapp/test.html',{'data': data})
         else:
-            return render(request,'mainapp/row_add.html',{'form': form})
-        #Object_table = surveytable(BHID = 3.7, at = 'kolx', az = 14.0, dip = 14.0 ,Comments = 'hola')
-        #session.add(Object_table)
-        #session.flush()
-        #session.rollback()
+            return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key})
+
     else:
         form = MyGenericModelForm()
 
-    return render(request,'mainapp/row_add.html',{'form': form})
+    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key})
 ##end
 
 #------------------End Dinamic Model--------------------#
@@ -130,10 +168,7 @@ def open(request):
         cols,tks,data,table_key = update(reflector)
 
         return redirect('mainapp:reflector', table_key)
-        #expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
-        #response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
-        #response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
-        #return responseyy
+
     return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
 
 def new(request):
@@ -181,6 +216,35 @@ def new(request):
 
             execute(eng, meta)
 
+            #-Register tables on system table: OG_SMDH_SYSTEM------------------------#
+            table_key = 'OG_SMDH_SYSTEM'
+            tdata = [
+                    {'Table':'survey','Type':'definition table','Comments':''},
+                    {'Table':'collar','Type':'definition table','Comments':''},
+                    {'Table':'assay_certificate','Type':'reference table','Comments':''},
+                    {'Table':'rock_catalog','Type':'reference table','Comments':''},
+                    {'Table':'assay','Type':'interval table','Comments':''},
+                    {'Table':'litho','Type':'interval table','Comments':''}
+                    ]
+            reflector = Reflector(con_string)
+            reflector.reflectTables()
+            table = reflector.getOg_table(table_key)
+            Base = declarative_base()
+            generic_object = type(str(table_key), (Base,), defineObject(table))
+
+            session = reflector.make_session()
+            for data in tdata:
+                Object_table = generic_object(**data)
+                session.add(Object_table)
+            try:
+                session.commit()
+                #session.flush()
+            except:
+                session.rollback()
+            finally:
+                session.close()
+            #-END----------------------#
+
             response = redirect('mainapp:dashboard')
             expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
             response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
@@ -198,6 +262,7 @@ def dashboard(request):
 def reflector(request, table_key = ''):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
+    #try: can raise AttributeError
     reflector.reflectTables()
 
     if request.method == 'POST':
@@ -391,7 +456,7 @@ def fields_generator(table):
             except:
                 col_len = 255
 
-        if col_type in ['FLOAT', 'DOUBLE PRECISION']:
+        if col_type in ['FLOAT', 'DOUBLE_PRECISION']:
             fields[column.name] = models.FloatField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
         elif col_type in ['VARCHAR']:
             fields[column.name] = models.CharField(max_length = col_len, primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
@@ -406,8 +471,8 @@ def fields_generator(table):
                 fields[column.name] = models.NullBooleanField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
             else:
                 fields[column.name] = models.BooleanField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-        #else:
-            #fields[column.name] = models.CharField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
+        else:
+            fields[column.name] = models.CharField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
 
         #fields['__unicode__'] = lambda self: '%s' (self.name),
 

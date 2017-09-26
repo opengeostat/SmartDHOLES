@@ -6,19 +6,19 @@
 
 <div class="col-12 col-md-3 col-xl-2 bd-sidebar bg-dark p-0" role="navigation" id="left-panel">
 
-      <ul class="nav flex-column left-panel">
+      <ul class="nav flex-column left-panel" style="height: 100%;">
         <li class="nav-item left-panel-droopdown clearfix" status="closed">
           <a class="nav-link text-light" href="#">
             <i class="fa fa-th"></i> Tables <i class="float-right fa fa-caret-right"></i>
           </a>
         </li>
 
-        <ul id="left-panel-tables" class="nav flex-column" style="display:none" role="menu">
+        <ul id="left-panel-tables" class="nav flex-column" style="display:none;" role="menu">
           {% for table_name in tks %}
           <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-light" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
           {% endfor %}
         </ul>
-        <li class="nav-item"><a class="nav-link text-light" href="#">Remove Table</a></li>
+        <li class="nav-item fixed-bottom"><a class="nav-link text-light" href="#">Remove Table</a></li>
       </ul>
 </div>
 <div class="col-12 col-md-9 col-xl-10">
@@ -27,7 +27,7 @@
 <input type="hidden" name="tablename" value={{ table_key }}>
   <div class="table-responsive">
   <h6 class="text-muted mt-2 pull-left">smart drillholes table: <strong>{{table_key}}</strong></h6>
-  <button type="submit" id="btnsave"  class="btn btn-success btn-sm pull-right my-2"><span class="fa fa-check"></span> Save</button>
+  <button type="submit" id="btnsave"  class="btn btn-warning btn-sm pull-right my-2"><span class="fa fa-trash"></span></button>
   <table class="table table-sm table-bordered table-striped" id="DB_Table">
   <thead class="table-inverse">
 
@@ -66,7 +66,10 @@
   </tbody>
   </table>
   </div>
-    <button type="submit" id="btnsave"  class="btn btn-success btn-sm pull-right"><span class="fa fa-check"></span> Save</button>
+  <div class="btn-group pull-right" role="group" aria-label="Basic example">
+    <a href="{% url 'mainapp:generic_add' table_key %}" class="btn btn-success btn-sm"><span class="fa fa-plus"></span></a>
+    <button type="submit" id="btnsave"  class="btn btn-warning btn-sm"><span class="fa fa-trash"></span></button>
+</div>
     </form>
 
 </div>

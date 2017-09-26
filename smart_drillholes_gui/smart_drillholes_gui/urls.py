@@ -22,6 +22,6 @@ from django.conf import settings
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^login/$', auth_views.login, {'template_name': 'mainapp/login.html'}, name = 'login'),
-    url(r'^logout/$', auth_views.logout,{'next_page':'/'}, name='logout'),
+    url(r'^logout/$', auth_views.logout,{'next_page':'/login'}, name='logout'),
     url(r'^', include('mainapp.urls', namespace='mainapp')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

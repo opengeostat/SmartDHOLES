@@ -69,6 +69,9 @@ class og_dbTable:
             if column.type:
                 col_def['type'] = column.type
 
+            if column.type:
+                col_def['type_n'] = column.type.__visit_name__
+
             if column.key:
                 col_def['key'] = column.key
 
