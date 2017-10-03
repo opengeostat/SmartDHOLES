@@ -2,7 +2,7 @@
 /build
 /dist
 
-#python metadata 
+#python metadata
 /*.egg
 /*.egg-info
 
@@ -25,3 +25,6 @@
 
 #database files
 *.sqlite
+*.sqlite3
+/migrations/
+!/migrations/__init__.py

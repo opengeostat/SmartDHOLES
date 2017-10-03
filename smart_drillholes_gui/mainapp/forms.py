@@ -15,16 +15,16 @@ TABLE_TYPE_CHOICES = (
 
 
 class OpenPostgresForm(forms.Form):
-    host = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+    db_host = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
                                                          'placeholder': 'host'}))
-    name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+    db_name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
                                                          'placeholder': 'database'}))
-    user = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+    db_user = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
-                                                         'placeholder': 'username'}))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={'required': True,
+                                                         'placeholder': 'DB user'}))
+    db_password = forms.CharField(widget=forms.PasswordInput(attrs={'required': True,
                                                          'class': 'form-control',
                                                          'placeholder': 'password'}))
     db_type = forms.ChoiceField(widget=forms.Select(attrs={'required': True,
@@ -62,11 +62,6 @@ class AddTableForm(forms.Form):
                                    choices=TABLE_TYPE_CHOICES,
                                    label="Table type:")
 
-#-------------------------------------------------------------------------------------------------------------------
-# override type in phone field
-class PhoneInput(TextInput):
-    input_type = 'tel'
-
 class AppUserForm(ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(render_value=True,
                                                           attrs={'required': True,
@@ -77,11 +72,9 @@ class AppUserForm(ModelForm):
                                                                          'class': 'form-control form-control-lg',
                                                                          'placeholder': 'Confirm your password'}))
 
-    phone = forms.CharField(widget=PhoneInput(), required=False)
-
     class Meta:
         model = AppUser
-        fields = ['username', 'fullname', 'email', 'phone']
+        fields = ['username', 'fullname']
 
     def __init__(self, *args, **kwargs):
         super(AppUserForm, self).__init__(*args, **kwargs)
@@ -90,13 +83,6 @@ class AppUserForm(ModelForm):
 
         self.fields['fullname'].widget.attrs.update({'class': 'form-control form-control-lg',
                                                  'placeholder': 'full name'})
-
-        self.fields['email'].widget.attrs.update({'class': 'form-control form-control-lg',
-                                                  'placeholder': 'email address'})
-
-        self.fields['phone'].widget.attrs.update({'class': 'form-control form-control-lg',
-                                                  'placeholder': '+999999999',
-                                                  'type': 'phone'})
 
     def clean(self):
         password = self.cleaned_data.get('password')

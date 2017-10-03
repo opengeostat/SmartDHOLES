@@ -8,16 +8,14 @@ from django.core.validators import RegexValidator
 # Create your models here.
 
 class AppUserManager(BaseUserManager):
-    def create_user(self, username, password=None, email = None, phone = None):
+    def create_user(self, username, password=None):
         """
         Creates and saves a User with the given username, full name, email and password.
         """
         if not username:
             raise ValueError('Users must have an username')
         user = self.model(
-            username=username,
-            email=email,
-            phone=phone,
+            username=username
         )
         user.set_password(password)
         user.save(using=self._db)
@@ -39,12 +37,6 @@ class AppUserManager(BaseUserManager):
 class AppUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=30, unique=True)
     fullname = models.CharField(max_length=255, blank=True, null=True)
-    # Validate the phone number
-    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$',
-                                 message="Phone number must be entered in the \
-                                 format: '+999999999'. Up to 15 digits allowed")
-    phone = models.CharField(validators=[phone_regex], max_length=16, blank=True, null=True, unique=False)
-    email = models.EmailField(verbose_name='email address', max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -60,7 +52,7 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
         # This is the one to show to the public
         return self.username
 
-    def __str__(self): # __unicode__ on Python 2
+    def __unicode__(self): # __unicode__ on Python 2
         return self.username
     def assign_perm(self, perm, obj=None):
         return assign_perm(perm, self, obj)
