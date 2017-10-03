@@ -4,6 +4,16 @@
 {% block content %}
 <div class="col-md-6 mx-auto">
 {% if form.errors %}{{form.errors}}{% endif %}
+<div style="margin-top:20px;">
+  {% if messages %}
+  {% for message in messages %}
+  <div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{ message }}
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
 
   <form id="formid" method="POST" action="{% url 'mainapp:open' %}" enctype="multipart/form-data">
     {% csrf_token %}
@@ -50,7 +60,9 @@
 
 <script>
 $(document).ready(function(){
-$('option#sqlite').attr('selected',"selected");
+// $('select#id_db_type option:first').attr('selected',"selected");
+
+
 $("#id_db_type").change(function(evento){
   if(this.value == 'postgresql'){
     var  input_host = "<div id='form_group_host' class='form-group'>"+
@@ -93,6 +105,17 @@ $("#id_db_type").change(function(evento){
     $("#files_explorer").removeClass("d-none");
   }
 });
+
+var type = "{{db_type}}";
+if (type == "postgresql"){
+  $('select#id_db_type option:last').attr('selected',"selected");
+  $("#id_db_type").trigger('change');
+}
+else if (type == "sqlite"){
+  $('select#id_db_type option:first').attr('selected',"selected");
+  $("#id_db_type").trigger('change');
+}
+
 $("#directory_content").on('click', '.path',function(event){
   event.preventDefault();
   var element_path = $(this).attr('path');

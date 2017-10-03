@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-
 import sys
 
-from sqlalchemy import MetaData, engine, exc
-from og_tables import og_dbTable
-from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy             import MetaData, engine
+from og_tables              import og_dbTable
+from sqlalchemy.orm         import sessionmaker
+from util                   import reflect
+from error                  import EmptyError
 #-reflector
 class Reflector():
     def __init__(self, engineURL = ''):
@@ -13,30 +13,25 @@ class Reflector():
         self.engineURL = engineURL
         self.table_keys = []
         self.pure_tables = []
-
         self.reflected = False
 
-    #-fatal
-    def fatal(self,*L):
-        print >>sys.stderr, ''.join(L)
-        raise SystemExit
-
+    @reflect
     def reflectTables(self):
         try:
             self.dbengine = engine.create_engine(self.engineURL)
             self.metadata = MetaData(bind=self.dbengine, reflect=True)
-        except exc.SQLAlchemyError:
-            db_name = self.engineURL.split('///')[-1]
-
-            self.fatal("Could not connect: %s" % db_name)
+        except:
             self.reflected = False
-            return False
+            raise
         else:
             self.table_keys = self.metadata.tables.keys()
-            for tableName in sorted(self.metadata.tables.keys()):
+            for tableName in sorted(self.table_keys):
                 self.create_ogTable(self.metadata.tables[tableName])
-            self.reflected = True
-            return True
+            if self.table_keys == []:
+                self.reflected = False
+                raise EmptyError("Please verify that your database is not empty.")
+            else:
+                self.reflected = True
 
     #-showTable
     def create_ogTable(self,table):
@@ -54,6 +49,11 @@ class Reflector():
         self.table.setColumns(table.c)
 
         self.og_tables[str(table.name)] = self.table
+
+    def exist_table(self, table_key):
+        if table_key in self.table_keys:
+            return True
+        return False
 
     def getOg_tables(self):
         return self.og_tables

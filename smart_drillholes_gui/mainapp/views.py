@@ -3,47 +3,34 @@
 from __future__                 import unicode_literals
 from .forms                     import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, MyModelForm, AppUserForm, GenericModelForm
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy                 import Column, String, Float, exc
+from sqlalchemy                 import String, Float, exc #(exc: Exceptions)
 from django.shortcuts           import render, redirect
 from django.http                import JsonResponse, Http404
 from reflector.og_reflector     import Reflector
+from reflector.util             import create_model, defineObject, update, pg_create, fields_generator
+from reflector.bugs             import check_bugs
 from smart_drillholes_gui       import settings
-from psycopg2                   import ProgrammingError
-from sqlalchemy                 import create_engine
 from django.contrib             import messages
+from django.forms               import ModelForm
+from django                     import forms
 from smart_drillholes.core      import *
 from django.urls                import reverse
 import datetime
 import os
 import re
-from django.db                  import models
-from django                     import forms
-from psycopg2 import            IntegrityError
 
-#------------------Dinamic Model------------------------#
-def create_model(name, attrs={}, meta_attrs={}, module_path='django.db.models'):
-    attrs['__module__'] = module_path
-    class Meta:
-        pass
-
-    setattr(Meta, 'app_label', 'reflector')
-
-    Meta.__dict__.update(meta_attrs, __module__ = module_path)
-    attrs['Meta'] = Meta
-    return type(str(name), (models.Model,), attrs)
-
-##dinamic test
-def generic_add(request, table_key):
+def generic_add(request, table_key, oid = None):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
     reflector.reflectTables()
 
-
+    exist = reflector.exist_table(table_key)
+    if not exist:
+        msg = "Please verify that the table: '{}' does not exist.".format(table_key)
+        messages.add_message(request, messages.WARNING, msg)
+        return redirect('mainapp:reflector')
     table = reflector.getOg_table(str(table_key))
     fields = fields_generator(table)
-
-    from django.forms import ModelForm
-
     generic_model = create_model('generic', attrs=fields)
 
     class MyGenericModelForm(MyModelForm):
@@ -66,22 +53,35 @@ def generic_add(request, table_key):
                 if _from >= _to:
                     raise forms.ValidationError({'FROM': "FROM can't be greather or igual than TO"})
 
-
     if request.method == "POST":
         Base = declarative_base()
         generic_object = type(str(table_key), (Base,), defineObject(table))
-
         form = MyGenericModelForm(request.POST)
+        if "update" in request.POST:
+            oid = request.POST.get('oid')
+            pks = eval(str(oid))
+            action = ("update",pks)
+        elif "insert" in request.POST:
+            action = ("insert",)
         if form.is_valid():
             data = form.cleaned_data
-
             #Example:
             #Object_table = surveytable(BHID = 3.7, at = '2.0', az = 14.0, dip = 14.0 ,Comments = 'hello')
             #session.add(Object_table)
-
             session = reflector.make_session()
-            Object_table = generic_object(**data)
-            session.add(Object_table)
+            if "update" in request.POST:
+                Base = declarative_base()
+                query = session.query(generic_object).get(pks)
+                value = query.__dict__.copy()
+                del value['_sa_instance_state']
+                form = MyGenericModelForm(request.POST, initial = value)
+                if form.has_changed():
+                    cdata = form.changed_data
+                    for k in form.changed_data:
+                        query.__setattr__(k,data[k])
+            else:
+                Object_table = generic_object(**data)
+                session.add(Object_table)
             try:
                 session.commit()
                 #session.flush()
@@ -90,39 +90,70 @@ def generic_add(request, table_key):
                 # DETAIL:  Key (BHID)=(fddf) is not present in table "collar".
                 session.rollback()
                 if "violates foreign key constraint" in str(err):
-                    m = re.search('(DETAIL:)[\w|\s|\(|\)\|=|"]+\W', str(err))
+                    m = re.search('(DETAIL:).+\W', str(err))
                     m = str(m.group(0)).partition("DETAIL:")
                     messages.add_message(request, messages.WARNING, m[2])
                     messages.add_message(request, messages.INFO, 'Please verify all foreign key constraints.')
-                    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key})
+                    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key, 'action': action})
+                #postgresql UNIQUE constraint error
                 elif "duplicate key value violates unique constraint" in str(err):
-                    m = re.search('(DETAIL:)[\w|\s|\(|\)\|=|"|,]+\W', str(err))
+                    m = re.search('(DETAIL:).+\W', str(err))
                     m = str(m.group(0)).partition("DETAIL:")
                     messages.add_message(request, messages.WARNING, m[2])
                     messages.add_message(request, messages.INFO, 'Please verify all unique constraints.')
-                    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key})
+                    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key, 'action': action})
+                #sqlite UNIQUE constraint error
+                elif "UNIQUE constraint failed" in str(err):
+                    m = re.search('(UNIQUE).+\[SQL', str(err))
+                    m = str(m.group(0)).partition("UNIQUE")
+                    m = str(m[1]) + (str(m[2]).strip('[SQL'))
+                    messages.add_message(request, messages.WARNING, m)
+                    messages.add_message(request, messages.INFO, 'Duplicate key value violates unique constraint.')
+                    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key, 'action': action})
                 else:
-                    raise
+                    messages.add_message(request, messages.WARNING, str(err))
+                    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key, 'action': action})
             except:
                 raise
             finally:
                 session.close()
 
-            # session.commit()
-            # session.close()
             return redirect(reverse('mainapp:reflector', kwargs={'table_key': table_key}))
-
-            #return render(request,'mainapp/test.html',{'data': data})
         else:
-            return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key})
+            return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key,'action':action})
 
+    elif oid != None and request.method == "GET":
+        # form = MyGenericModelForm()
+        # return render(request,'mainapp/test.html',{'data': oid})
+        pks = oid.split(',')
+        Base = declarative_base()
+        object_table = type(str(table_key), (Base,), defineObject(table))
+
+        if pks:
+            session = reflector.make_session()
+            try:
+                query = session.query(object_table).get(pks)
+            except exc.InvalidRequestError as err:
+                messages.add_message(request, messages.WARNING, str(err))
+                return redirect(reverse('mainapp:reflector', kwargs={'table_key': table_key}))
+            if query:
+                value = query.__dict__.copy()
+                del value['_sa_instance_state']
+                model = generic_model(**value)
+                form = MyGenericModelForm(instance = model)
+                session.close()
+                action = ("update",pks)
+            else:
+                msg = "Please verify: The row you try to update does not exist."
+                messages.add_message(request, messages.WARNING, msg)
+                return redirect(reverse('mainapp:reflector', kwargs={'table_key': table_key}))
+
+        #--------------------------------
     else:
+        action = ("insert",)
         form = MyGenericModelForm()
 
-    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key})
-##end
-
-#------------------End Dinamic Model--------------------#
+    return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key,'action':action})
 
 def index(request):
     response = render(request,
@@ -131,13 +162,19 @@ def index(request):
     return response
 
 def open(request):
+    db_type = 'sqlite'
     if request.method == "GET":
         form = OpenSQliteForm()
     elif request.method == "POST":
         db_type = request.POST.get('db_type')
         if db_type == 'sqlite':
+            form = OpenSQliteForm()
             if settings.files_explorer:
-                dbName = os.path.join(request.POST.get('current_path'),request.POST.get('selected_file'))
+                selected_file = request.POST.get('selected_file')
+                dbName = os.path.join(request.POST.get('current_path'),selected_file)
+                if selected_file == '':
+                    messages.add_message(request, messages.INFO, "Please select a sqlite database file.")
+
             else:
                 form = OpenSQliteForm(request.POST, request.FILES)
                 if form.is_valid():
@@ -164,12 +201,15 @@ def open(request):
         request.session['db_type'] = db_type
 
         reflector = Reflector(con_string)
-        reflector.reflectTables()
-        cols,tks,data,table_key = update(reflector)
+        error = reflector.reflectTables()
 
-        return redirect('mainapp:reflector', table_key)
+        if error:
+            messages.add_message(request, messages.WARNING, error)
+        else:
+            cols,tks,data,table_key = update(reflector)
+            return redirect('mainapp:reflector', table_key)
 
-    return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
+    return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/"),'db_type':db_type})
 
 def new(request):
     if request.method == "GET":
@@ -181,10 +221,10 @@ def new(request):
     elif request.method == "POST":
         form = NewForm(request.POST)
         if form.is_valid():
+            dbname_to_create = form.cleaned_data.get('name')
             if form.cleaned_data.get('db_type') == 'sqlite':
-                con_string = 'sqlite:///{}.sqlite'.format(os.path.join(request.POST.get('current_path'), form.cleaned_data.get('name')))
+                con_string = 'sqlite:///{}.sqlite'.format(os.path.join(request.POST.get('current_path'), dbname_to_create))
             elif form.cleaned_data.get('db_type') == 'postgresql':
-                dbname_to_create = form.cleaned_data.get('name')
                 try:
                     con_string = pg_create(user = 'gramvi_admin', password = 'password', dbname_to_create = dbname_to_create)
                 #database "lm" already exists
@@ -195,7 +235,15 @@ def new(request):
                         return redirect('mainapp:new')
             eng, meta = og_connect(con_string)
 
-            og_create_dhdef(eng, meta)
+            try:
+                og_create_dhdef(eng, meta)
+            except AssertionError as err:
+                if form.cleaned_data.get('db_type') == 'sqlite':
+                    messages.add_message(request, messages.WARNING, 'Database "%s" already exists on path: %s.'%(dbname_to_create,request.POST.get('current_path')))
+                else:
+                    messages.add_message(request, messages.WARNING, str(err))
+                return redirect('mainapp:new')
+
 
             og_system(eng, meta)
 
@@ -244,13 +292,11 @@ def new(request):
             finally:
                 session.close()
             #-END----------------------#
-
             response = redirect('mainapp:dashboard')
             expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
             response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
             response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
             return response
-
 
 def dashboard(request):
     response = render(request,
@@ -263,7 +309,17 @@ def reflector(request, table_key = ''):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
     #try: can raise AttributeError
-    reflector.reflectTables()
+    error = reflector.reflectTables()
+    if error:
+        messages.add_message(request, messages.WARNING, error)
+        return redirect('mainapp:open')
+
+    if table_key != '':
+        exist = reflector.exist_table(table_key)
+        if not exist:
+            msg = "Please verify that the table: '{}' does not exist.".format(table_key)
+            messages.add_message(request, messages.WARNING, msg)
+            table_key = ''
 
     if request.method == 'POST':
         pks = request.POST.getlist('checkbox-delete')
@@ -281,8 +337,23 @@ def reflector(request, table_key = ''):
             for pk in pks:
                 query = session.query(object_table).get(pk)
                 session.delete(query)
-                session.commit()
-            session.close()
+                try:
+                    session.commit()
+                except exc.IntegrityError as err:
+                    #DETAIL:  Key (SampleID)=(120) is still referenced from table "assay".
+                    if "Key" and "is still referenced from table" in str(err):
+                        m = re.search('(DETAIL:)[\w|\s|\(|\)\|=|"]+\W', str(err))
+                        m = str(m.group(0)).partition("DETAIL:")
+                        messages.add_message(request, messages.WARNING, m[2])
+                        session.rollback()
+                    else:
+                        messages.add_message(request, messages.WARNING, "A unexpected error has been happened")
+                        session.rollback()
+                except:
+                        messages.add_message(request, messages.WARNING, "A unexpected error has been happened")
+                        session.rollback()
+                finally:
+                    session.close()
 
     cols,tks,data,table_key = update(reflector, table_key)
 
@@ -335,150 +406,20 @@ def add_table(request):
             execute(eng, meta)
         return redirect('mainapp:dashboard')
 
-#--------------------utils----------------------#
-#Define database Object Table
-def defineObject(table):
-    columns = table.getColumns()
-    tbl_def = {}
-    primary_key = False
-    nullable = False
-    unique = False
-    for column in columns:
-        if column.primary_key:
-            primary_key = True
-        else:
-            primary_key = False
-        if column.nullable:
-            nullable = True
-        else:
-            nullable = False
-        if column.unique:
-            unique = True
-        else:
-            unique = False
-        tbl_def[column.name] = Column(primary_key = primary_key, nullable = nullable, unique = unique)
-    tbl_def['__tablename__'] = table.getName()
+def verify(request, table_key):
+    engineURL = request.session.get('engineURL')
+    reflector = Reflector(engineURL)
+    reflector.reflectTables()
 
-    return tbl_def
+    exist = reflector.exist_table(table_key)
+    if not exist:
+        msg = "Is not posible verify bugs on: '{}', this table does not exist.".format(table_key)
+        messages.add_message(request, messages.WARNING, msg)
+    else:
+        errors = check_bugs(reflector, table_key)
+        messages.add_message(request, messages.WARNING, errors)
 
-#this function update the data from database
-def update(reflector, table_key = '', session = ''):
-    if reflector.is_reflected():
-        if session == '':
-            session = reflector.make_session()
-
-        #table names for template
-        tks = reflector.get_tableKeys()
-
-        data = []
-        if table_key != '':
-            table = reflector.getOg_table(table_key)
-            dat = session.query(reflector.get_metadata().tables[table_key]).all()
-        else:
-            table_key = tks[0]
-            table = reflector.getOg_table(table_key)
-            dat = session.query(reflector.get_metadata().tables[tks[0]]).all()
-
-        #columns for template table
-        cols = table.getColumnsInfo()
-
-        #for set primary keys on checkbox delete field
-        indxs = table.getPKeysIndex()
-        for dt in dat:
-            ids = []
-            for i in indxs:
-                ids.append(str(dt[i]))
-
-            dic = {'pks':','.join(ids),'data':dt}
-            data.append(dic)
-    session.close()
-    del reflector
-    return (cols,tks,data,table_key)
-
-def pg_create(user, password, dbname_to_create, host = "localhost", dbname_to_connect = "postgres"):
-    str_engine = "postgresql://{2}:{3}@{0}/{1}".format(host,dbname_to_connect,user,password)
-    engine = create_engine(str_engine)
-    with engine.connect().execution_options(
-            isolation_level="AUTOCOMMIT") as conn:
-
-        #currentdb = conn.scalar("select current_database()")
-        for attempt in range(3):
-            try:
-                #"CREATE DATABASE %s TEMPLATE %s" % (dbname_to_create, currentdb))
-                conn.execute("CREATE DATABASE %s" % (dbname_to_create))
-            except exc.ProgrammingError:
-                raise
-            except exc.OperationalError as err:
-                if attempt != 2 and "accessed by other users" in str(err):
-                    time.sleep(.2)
-                    continue
-                else:
-                    raise
-            else:
-                conn.close()
-                str_engine = "postgresql://{2}:{3}@{0}/{1}".format(host,dbname_to_create,user,password)
-                break
-    return str_engine
-
-def fields_generator(table):
-    fields = {}
-    #fields = {
-        #'first_name': models.CharField(max_length=255),
-        #'last_name': models.CharField(max_length=255),
-        #'__unicode__': lambda self: '%s %s' (self.first_name, self.last_name),
-    #}
-    columns = table.getColumns()
-    primary_key = False
-    nullable = False
-    unique = False
-    for column in columns:
-        if column.primary_key:
-            primary_key = True
-        else:
-            primary_key = False
-        if column.nullable:
-            nullable = True
-        else:
-            nullable = False
-        if column.unique:
-            unique = True
-        else:
-            unique = False
-
-        if column.type:
-            col_type = column.type.__visit_name__
-
-        if column.type:
-            try:
-                col_len = column.type.length
-                if col_len == None:
-                    col_len = 255
-            except:
-                col_len = 255
-
-        if col_type in ['FLOAT', 'DOUBLE_PRECISION']:
-            fields[column.name] = models.FloatField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-        elif col_type in ['VARCHAR']:
-            fields[column.name] = models.CharField(max_length = col_len, primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-        elif col_type in ['TEXT']:
-            fields[column.name] = models.TextField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-        elif col_type in ['INTEGER']:
-            fields[column.name] = models.IntegerField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-        elif col_type in ['SMALLINT']:
-            fields[column.name] = models.SmallIntegerField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-        elif col_type in ['BOOLEAN']:
-            if nullable:
-                fields[column.name] = models.NullBooleanField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-            else:
-                fields[column.name] = models.BooleanField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-        else:
-            fields[column.name] = models.CharField(primary_key = primary_key, blank=nullable, null=nullable, unique=unique)
-
-        #fields['__unicode__'] = lambda self: '%s' (self.name),
-
-    return fields
-#--------------------end utils------------------#
-
+    return redirect(reverse('mainapp:reflector', kwargs={'table_key': table_key}))
 
 def logout_user(request):
     logout(request)

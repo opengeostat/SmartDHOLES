@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% block content %}
 <div class="col-md-6 mx-auto" style="margin-top:20px; margin-bottom:20px;">
-
+<h1>{{ action.0 }} {{ table_key }}</h1>
 {% if form.non_field_errors %}
 {% for error in form.non_field_errors %}
 <div class="form-group">
@@ -43,10 +43,12 @@
           </div>
         </div>
         {% endfor %}
-
+        {% if action.0 == "update" %}
+        <input type="hidden" name="oid" value="{{action.1}}">
+        {% endif %}
     <div id="btns" class="text-right mt-2">
       <a href="{% url 'mainapp:reflector' table_key %}" class="btn btn-danger">Cancel</a>
-      <button type="submit" class="btn btn-success">Save</button>
+      <button type="submit" name="{{action.0}}" class="btn btn-success">Save</button>
     </div>
   </form>
 </div>

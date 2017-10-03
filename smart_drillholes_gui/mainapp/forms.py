@@ -53,7 +53,6 @@ class NewForm(forms.Form):
                                 label="Database type:"
                                 )
 
-
 class AddTableForm(forms.Form):
     name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
