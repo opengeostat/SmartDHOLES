@@ -83,9 +83,7 @@ $(document).ready(function(){
     $("#files_explorer").addClass("d-none");
   }
 $('option#sqlite').attr('selected',"selected");
-if ($("#id_db_type").val() == "postgresql"){
-  postgresql();
-}
+
 $("#id_db_type").change(function(evento){
   if(this.value == 'postgresql'){
     postgresql();

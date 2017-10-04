@@ -196,8 +196,7 @@ def open(request):
                 user = form.cleaned_data.get('db_user')
                 password = form.cleaned_data.get('db_password')
                 con_string = 'postgresql://{2}:{3}@{0}/{1}'.format(host,dbname,user,password)
-            else:
-                return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/")})
+
         request.session['engineURL'] = con_string
         request.session['db_type'] = db_type
 
