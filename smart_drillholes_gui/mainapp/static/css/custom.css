@@ -1,11 +1,7 @@
 .left-panel a:hover{
     background: rgba(0,0,0,0.2);
 }
-/*<<<<<<< HEAD
-.left-panel li > ul#left-panel-tables{
-=======*/
 #left-panel-tables{
->>>>>>> 48654ecc9cca2a3c290d10d15fbf39025950c022
     background: rgba(0,0,0,0.1);
 }
 .path{

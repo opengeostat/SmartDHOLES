@@ -9,8 +9,9 @@ urlpatterns = [
                 url(r'^reflector/$', views.reflector, name='reflector'),
                 url(r'^reflector/(?P<table_key>\w+)/$', views.reflector, name='reflector'),
                 url(r'^add_table/$', views.add_table, name='add_table'),
-
+                url(r'^verify/(?P<table_key>\w+)/$', views.verify, name='verify'),
                 url(r'^add/(?P<table_key>\w+)/$', views.generic_add, name='generic_add'),
+                url(r'^update/(?P<table_key>\w+)/(?P<oid>[\w\.,-]+)/$', views.generic_add, name='generic_update'),
 
                 url(r'^get_folder_content_in_json/$', views.get_folder_content_in_json, name='get_folder_content_in_json'),
 

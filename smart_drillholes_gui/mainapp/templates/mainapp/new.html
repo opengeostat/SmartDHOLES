@@ -2,14 +2,16 @@
 {% block title %}SmartDHOLES|New DB{% endblock %}
 {% block content %}
 <div class="col-md-6 mx-auto">
-  {% if messages %}
-  {% for message in messages %}
-  <div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
+  <div style="margin-top:20px;">  
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
       <button type="button" class="close" data-dismiss="alert">&times;</button>
       {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
   </div>
-  {% endfor %}
-  {% endif %}
   <form class="mt-2" method="POST" action="{% url 'mainapp:new' %}">
     {% csrf_token %}
     <input hidden value="/" id="current_path" name="current_path"/>
