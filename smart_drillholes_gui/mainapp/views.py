@@ -233,17 +233,27 @@ def new(request):
                         messages.add_message(request, messages.WARNING, 'Database "%s" already exists.'%(dbname_to_create))
                         messages.add_message(request, messages.INFO, 'Please verify all postgres database names.')
                         return redirect('mainapp:new')
-            eng, meta = og_connect(con_string)
 
+            error = False
             try:
+                eng, meta = og_connect(con_string)
                 og_create_dhdef(eng, meta)
             except AssertionError as err:
                 if form.cleaned_data.get('db_type') == 'sqlite':
                     messages.add_message(request, messages.WARNING, 'Database "%s" already exists on path: %s.'%(dbname_to_create,request.POST.get('current_path')))
                 else:
                     messages.add_message(request, messages.WARNING, str(err))
-                return redirect('mainapp:new')
+                error = True
+            except exc.OperationalError as err:
+                if "unable to open database file" in str(err):
+                    messages.add_message(request, messages.WARNING, 'Unable to create sqlite database file "%s.sqlite" on path: %s.'%(dbname_to_create,request.POST.get('current_path')))
+                else:
+                    messages.add_message(request, messages.WARNING, str(err))
+                error = True
+            except:
+                raise
 
+            if error: return redirect('mainapp:new')
 
             og_system(eng, meta)
 
