@@ -4,10 +4,22 @@
 
 {% block content %}
 {% include "mainapp/left_panel.html" %}
-<div style="width: calc(100% - 200px);margin-left:200px">
-<ol class="breadcrumb">
-  <li><b>{{ request.COOKIES.db }}</b></li>
-</ol>
+<div class="col-md-8 mx-auto">
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">{{ request.COOKIES.db }} <small class="text-muted float-right">{{ request.COOKIES.db_type }}</small></h3>
+  </div>
+  <div class="card-body row">
+    <div class="col-6">
+      <a href="{% url 'mainapp:reflector' %}">Admin Tables</a><br />
+      <a href="#">Estimate</a>
+    </div>
+    <div class="col-6">
+      <a href="#">Close connection</a><br />
+      <a href="#">Close session</a>
+    </div>
+  </div>
+</div>
 </div>
 {% block dashboard_content %}
 {% endblock %}
