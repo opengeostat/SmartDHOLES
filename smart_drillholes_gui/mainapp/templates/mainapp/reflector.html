@@ -125,7 +125,7 @@ $(".left-panel-droopdown").click(function(evento){
 $("#DB_Table").dataTable({
   paging:false,
   columnDefs: [
-                { orderable: false, targets: -1 }
+                { orderable: false, targets: [-1, -2] }
               ],
 });
 $("#DB_Table_filter input").addClass("form-control form-control-sm mx-2");
