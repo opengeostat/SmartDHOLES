@@ -211,6 +211,29 @@ def reflect(reflect_tables):
         except EmptyError as err:
             message = err.value
             return message
+        except AttributeError as err:
+            if "'NoneType' object has no attribute '_instantiate_plugins'" in str(err):
+                message = "Please open a database."
+                return message
+            else:
+                raise
+
         except:
             raise
     return wrapper
+
+#-7-----------------------CLEAN------------------------#
+# this function clean string connection
+def connection_str(request, clean = False):
+    if clean:
+        request.session['engineURL'] = None
+        request.session['db_type'] = None
+        request.session['db_name'] = None
+        return False
+
+    eng = request.session.get('engineURL')
+    db_tp = request.session.get('db_type')
+    db_nm = request.session.get('db_name')
+    if eng == None or db_tp == None or db_nm == None:
+        return False
+    return True

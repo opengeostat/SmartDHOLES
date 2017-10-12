@@ -7,12 +7,18 @@ DB_TYPE_CHOICES = (
     (u'postgresql', u"PostgreSQL")
 )
 TABLE_TYPE_CHOICES = (
+    ('References',(
     (u'assay_certificate', u"Assay Certificate"),
     (u'rock_catalog', u"Rock Catalog"),
+    (u'other_reference', u"Other Reference Table"),
+    )),
+
+    ('Interval',(
     (u'assay', u"Assay"),
     (u'litho', u"Lithology"),
+    (u'other_interval', u"Other Interval Table"),
+    )),
 )
-
 
 class OpenPostgresForm(forms.Form):
     db_host = forms.CharField(widget=forms.TextInput(attrs={'required': True,
@@ -58,7 +64,7 @@ class AddTableForm(forms.Form):
                                                          'class': 'form-control',
                                                          'placeholder': 'Set a name for the table'}))
     table_type = forms.ChoiceField(widget=forms.Select(attrs={'required': True,
-                                                              'class': 'form-control'}),
+                                                              'class': 'form-control custom-select'}),
                                    choices=TABLE_TYPE_CHOICES,
                                    label="Table type:")
 

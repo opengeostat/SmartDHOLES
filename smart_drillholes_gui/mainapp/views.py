@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 
-from __future__                 import unicode_literals
-from .forms                     import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, MyModelForm, AppUserForm, GenericModelForm
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy                 import String, Float, exc #(exc: Exceptions)
-from django.shortcuts           import render, redirect
-from django.http                import JsonResponse, Http404
-from reflector.og_reflector     import Reflector
-from reflector.util             import create_model, defineObject, update, pg_create, fields_generator
-from reflector.bugs             import check_bugs
-from smart_drillholes_gui       import settings
-from django.contrib             import messages
-from django.forms               import ModelForm
-from django                     import forms
-from smart_drillholes.core      import *
-from django.urls                import reverse
+from __future__                     import unicode_literals
+from .forms                         import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, MyModelForm, AppUserForm, GenericModelForm
+from sqlalchemy.ext.declarative     import declarative_base
+from sqlalchemy                     import String, Float, exc #(exc: Exceptions)
+from reflector.og_reflector         import Reflector
+from reflector.util                 import create_model, defineObject, update, pg_create, fields_generator, connection_str
+from reflector.bugs                 import check_bugs
+from smart_drillholes_gui           import settings
+from smart_drillholes.core          import *
+from django.contrib.auth.decorators import login_required
+from django.shortcuts               import render, redirect
+from django.http                    import JsonResponse, Http404
+from django.contrib                 import messages
+from django.forms                   import ModelForm
+from django                         import forms
+from django.urls                    import reverse
 import datetime
 import os
 import re
@@ -155,6 +156,7 @@ def generic_add(request, table_key, oid = None):
 
     return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key,'action':action})
 
+@login_required
 def index(request):
     response = render(request,
                       'mainapp/index.html',
@@ -192,13 +194,14 @@ def open(request):
             form = OpenPostgresForm(request.POST)
             if form.is_valid():
                 host = form.cleaned_data.get('db_host')
-                dbname = form.cleaned_data.get('db_name')
+                dbName = form.cleaned_data.get('db_name')
                 user = form.cleaned_data.get('db_user')
                 password = form.cleaned_data.get('db_password')
-                con_string = 'postgresql://{2}:{3}@{0}/{1}'.format(host,dbname,user,password)
+                con_string = 'postgresql://{2}:{3}@{0}/{1}'.format(host,dbName,user,password)
 
         request.session['engineURL'] = con_string
         request.session['db_type'] = db_type
+        request.session['db_name'] = dbName
 
         reflector = Reflector(con_string)
         error = reflector.reflectTables()
@@ -237,6 +240,7 @@ def new(request):
             error = False
             try:
                 eng, meta = og_connect(con_string)
+                #Create drillhole definition tables in the metadata, collar and survey.
                 og_create_dhdef(eng, meta)
             except AssertionError as err:
                 if form.cleaned_data.get('db_type') == 'sqlite':
@@ -309,14 +313,23 @@ def new(request):
             return response
 
 def dashboard(request):
-    response = render(request,
-                      'mainapp/dashboard.html',
-                      {'ref': 'dashboard'})
-    return response
+    eng = request.session.get('engineURL')
+    db_tp = request.session.get('db_type')
+    db_nm = request.session.get('db_name')
+    if not connection_str(request):
+        return redirect('mainapp:index')
+    return render(request,'mainapp/dashboard.html', {'ref': 'dashboard'})
+
+def close_connection(request):
+    connection_str(request, clean = True)
+    return redirect('mainapp:index')
 
 #@csrf_exempt
 def reflector(request, table_key = ''):
     engineURL = request.session.get('engineURL')
+    if not engineURL:
+        messages.add_message(request, messages.WARNING, message = "Please open a database.")
+        return redirect('mainapp:open')
     reflector = Reflector(engineURL)
     #try: can raise AttributeError
     error = reflector.reflectTables()
@@ -332,7 +345,7 @@ def reflector(request, table_key = ''):
             table_key = ''
 
     if request.method == 'POST':
-        pks = request.POST.getlist('checkbox-delete')
+        pks = request.POST.getlist('checkbox_delete')
         pp = []
         for i,pk in enumerate(pks):
             pks[i] = pk.split(',')
