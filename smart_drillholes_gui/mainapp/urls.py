@@ -12,7 +12,6 @@ urlpatterns = [
                 url(r'^verify/(?P<table_key>\w+)/$', views.verify, name='verify'),
                 url(r'^add/(?P<table_key>\w+)/$', views.generic_add, name='generic_add'),
                 url(r'^update/(?P<table_key>\w+)/(?P<oid>[\w\.,-]+)/$', views.generic_add, name='generic_update'),
-
                 url(r'^get_folder_content_in_json/$', views.get_folder_content_in_json, name='get_folder_content_in_json'),
-
+                url(r'^close_connection/$', views.close_connection, name='close_connection'),
 ]

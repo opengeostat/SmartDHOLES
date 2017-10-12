@@ -18,6 +18,7 @@
           <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-light" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
           {% endfor %}
         </ul>
+        <li class="nav-item"><a class="nav-link text-light" href="{% url 'mainapp:add_table' %}">Add Table</a></li>
         <li class="nav-item"><a class="nav-link text-light" href="#">Remove Table</a></li>
       </ul>
 </div>
@@ -38,10 +39,9 @@
 <input type="hidden" name="tablename" value={{ table_key }}>
   <div class="table-responsive">
   <h6 class="text-muted mt-2 pull-left">smart drillholes table: <strong>{{table_key}}</strong></h6>
-  <button type="submit" id="btnsave"  class="btn btn-warning btn-sm pull-right my-2"><span class="fa fa-trash"></span></button>
+  <button type="button" class="delete_modal_btn btn btn-warning btn-sm pull-right my-2"><span class="fa fa-trash"></span></button>
   <table class="table table-sm table-bordered table-striped" id="DB_Table">
   <thead class="table-inverse">
-
   <tr>
   {% for col in cols %}
   <th>
@@ -73,7 +73,7 @@
       </td>
       <td style="width:1%">
         <label class="custom-control custom-checkbox m-0 p-2">
-        <input name="checkbox-delete" value="{{ dat.pks }}" type="checkbox" class="custom-control-input">
+        <input name="checkbox_delete" value="{{ dat.pks }}" type="checkbox" class="custom-control-input">
         <span class="custom-control-indicator"></span>
         </label>
       </td>
@@ -85,12 +85,13 @@
   </div>
   <div class="btn-group pull-right" role="group" aria-label="Basic example">
     <a href="{% url 'mainapp:generic_add' table_key %}" class="btn btn-success btn-sm"><span class="fa fa-plus"></span></a>
-    <button type="submit" id="btnsave"  class="btn btn-warning btn-sm"><span class="fa fa-trash"></span></button>
+    <button type="button" class="delete_modal_btn btn btn-warning btn-sm"><span class="fa fa-trash"></span></button>
 </div>
 <div class="btn-group pull-right" role="group" aria-label="Basic example" style="margin-right:20px;">
   <a href="{% url 'mainapp:verify' table_key %}" class="btn btn-warning btn-sm"><span class="fa fa-bug"></span></a>
 </div>
-    </form>
+{% include "mainapp/modal.html" %}
+</form>
 
 </div>
 </div>
@@ -130,6 +131,22 @@ $("#DB_Table").dataTable({
 });
 $("#DB_Table_filter input").addClass("form-control form-control-sm mx-2");
 $("#DB_Table_filter").addClass("form-inline mt-2 clearfix float-right");
+// modal script
+$("button.delete_modal_btn").click(function(evento){
+  evento.preventDefault();
+
+  var nombres = [];
+  $("input[type=checkbox]:checked").each(
+      function ()
+      {
+          nombres.push($(this).val());
+      });
+  if (nombres != "") {
+    $('#deleteModal').modal();
+  }
+
+});
+
 });
 </script>
 {% endblock javascript %}

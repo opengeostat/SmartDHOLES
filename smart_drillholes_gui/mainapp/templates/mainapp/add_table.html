@@ -9,14 +9,14 @@
       {% csrf_token %}
       <div class="form-group">
         {{ form.table_type.label_tag }}
-        {{ form.table_type }}
+        {{form.table_type}}
       </div>
       <div class="form-group">
         {{ form.name.label_tag }}
         {{ form.name }}
       </div>
       <div class="text-right">
-        <a href="{% url 'mainapp:index' %}" class="btn btn-danger">Cancel</a>
+        <a href="{% url 'mainapp:reflector' %}" class="btn btn-danger">Cancel</a>
         <button type="submit" class="btn btn-success">Submit</button>
       </div>
     </form>
