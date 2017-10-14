@@ -1,7 +1,7 @@
 {% extends 'mainapp/base.html' %}
 {% block content %}
 <div class="row">
-  <div class="mx-auto">  
+  <div class="mx-auto">
   <h1>Wellcome to the Smart Drillholes GUI</h1>
   <p class="lead">To start a new project click here:
   <a href="{% url 'mainapp:new' %}" class="btn btn-primary">New Projects</a>
@@ -9,6 +9,12 @@
   <p class="lead">Or open an existent database:
   <a href="{% url 'mainapp:open' %}" class="btn btn-primary">Open Project</a>
   </p>
+  {% if request.session.engineURL %}
+  <div class="alert alert-warning">
+    There is already an open database: <a href="{% url 'mainapp:dashboard' %}">{{ request.session.engineURL }}</a><br/>
+    <small>Open a new one or <a href="{% url 'mainapp:close_connection' %}">close</a> it</small>
+  </div>
+{% endif %}
   </div>
 </div>
 {% endblock %}

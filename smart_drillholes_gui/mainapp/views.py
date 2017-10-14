@@ -210,7 +210,7 @@ def open(request):
             messages.add_message(request, messages.WARNING, error)
         else:
             cols,tks,data,table_key = update(reflector)
-            return redirect('mainapp:reflector', table_key)
+            return redirect('mainapp:dashboard')
 
     return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/"),'db_type':db_type})
 
@@ -306,11 +306,10 @@ def new(request):
             finally:
                 session.close()
             #-END----------------------#
-            response = redirect('mainapp:dashboard')
-            expiry_time = datetime.datetime.now() + datetime.timedelta(minutes=525600)
-            response.set_cookie(key='db', value=form.cleaned_data.get('name'), expires=expiry_time)
-            response.set_cookie(key='db_type', value=form.cleaned_data.get('db_type'), expires=expiry_time)
-            return response
+            request.session['engineURL'] = con_string
+            request.session['db_type'] = db_type
+            request.session['db_name'] = dbName
+            return redirect('mainapp:dashboard')
 
 def dashboard(request):
     eng = request.session.get('engineURL')
