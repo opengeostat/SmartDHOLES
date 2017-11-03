@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from __future__                     import unicode_literals
-from .forms                         import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, MyModelForm, AppUserForm, GenericModelForm
+from .forms                         import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, MyModelForm, AppUserForm, GenericModelForm, FormTableColumn
 from sqlalchemy.ext.declarative     import declarative_base
-from sqlalchemy                     import String, Float, exc #(exc: Exceptions)
+from sqlalchemy                     import String, Float, Integer, exc #(exc: Exceptions)
 from reflector.og_reflector         import Reflector
-from reflector.util                 import create_model, defineObject, update, pg_create, fields_generator, connection_str
+from reflector.util                 import create_model, defineObject, update, pg_create, fields_generator, connection_str, tb_data
 from reflector.bugs                 import check_bugs
 from smart_drillholes_gui           import settings
 from smart_drillholes.core          import *
@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts               import render, redirect
 from django.http                    import JsonResponse, Http404
 from django.contrib                 import messages
-from django.forms                   import ModelForm
+from django.forms                   import ModelForm, formset_factory
 from django                         import forms
 from django.urls                    import reverse
 import datetime
@@ -281,12 +281,12 @@ def new(request):
             #-Register tables on system table: OG_SMDH_SYSTEM------------------------#
             table_key = 'OG_SMDH_SYSTEM'
             tdata = [
-                    {'Table':'survey','Type':'definition table','Comments':''},
-                    {'Table':'collar','Type':'definition table','Comments':''},
-                    {'Table':'assay_certificate','Type':'reference table','Comments':''},
-                    {'Table':'rock_catalog','Type':'reference table','Comments':''},
-                    {'Table':'assay','Type':'interval table','Comments':''},
-                    {'Table':'litho','Type':'interval table','Comments':''}
+                    {'Table':'survey','Type':'definition (survey)','Comments':''},
+                    {'Table':'collar','Type':'definition (collar)','Comments':''},
+                    {'Table':'assay_certificate','Type':'reference','Comments':''},
+                    {'Table':'rock_catalog','Type':'reference','Comments':''},
+                    {'Table':'assay','Type':'interval','Comments':''},
+                    {'Table':'litho','Type':'interval','Comments':''}
                     ]
             reflector = Reflector(con_string)
             reflector.reflectTables()
@@ -383,6 +383,7 @@ def reflector(request, table_key = ''):
 
 def add_table(request):
     if request.method in ['GET', 'POST']:
+        RowFormset = formset_factory(FormTableColumn, extra=1, max_num=15)
         #if request.COOKIES.get('db_type') == "sqlite":
         if request.session.get('db_type') == "sqlite":
             #con_string = 'sqlite:///{}.sqlite'.format(request.COOKIES.get('db'))
@@ -394,23 +395,26 @@ def add_table(request):
         eng, meta = og_connect(con_string)
     if request.method == 'GET':
         form = AddTableForm()
+
         return render(request,
                       'mainapp/add_table.html',
-                      {'ref': 'dashboard', 'form': form})
+                      {'ref': 'dashboard', 'form': form, 'formset':RowFormset})
     elif request.method == 'POST':
         form = AddTableForm(request.POST)
-        if form.is_valid():
+        formset = RowFormset(request.POST)
+        if form.is_valid() and formset.is_valid():
+            table_name = form.cleaned_data.get('table_name')
             if form.cleaned_data.get('table_type') == 'assay_certificate':
-                og_references(eng, meta, table_name=form.cleaned_data.get('name'), key='SampleID', cols={'Au': {'coltypes': Float,
+                og_references(eng, meta, table_name=table_name, key='SampleID', cols={'Au': {'coltypes': Float,
                                                                                    'nullable': True}})
             elif form.cleaned_data.get('table_type') == 'rock_catalog':
-                og_references(eng, meta, table_name=form.cleaned_data.get('name'), key='RockID', cols={'Description': {'coltypes': String,
+                og_references(eng, meta, table_name=table_name, key='RockID', cols={'Description': {'coltypes': String,
                                                                                                         'nullable': True}})
             elif form.cleaned_data.get('table_type') == 'assay':
                 for column in meta.tables['assay_certificate'].columns:
                     if column.primary_key:
                         pk = column.key
-                og_add_interval(eng, meta, table_name=form.cleaned_data.get('name'), cols={'SampleID': {'coltypes': String,
+                og_add_interval(eng, meta, table_name=table_name, cols={'SampleID': {'coltypes': String,
                                                                                   'nullable': False,
                                                                                   'foreignkey': {'column': '{}.{}'.format(table, pk),
                                                                                                  'ondelete': 'RESTRICT',
@@ -420,13 +424,50 @@ def add_table(request):
                 for column in meta.tables[table].columns:
                     if column.primary_key:
                         pk = column.key
-                og_add_interval(eng, meta, table_name=form.cleaned_data.get('name'), cols={'RockID':{'coltypes': String,
+                og_add_interval(eng, meta, table_name=table_name, cols={'RockID':{'coltypes': String,
                                                                                'nullable': True,
                                                                                'foreignkey': {'column': '{}.{}'.format(table, pk),
                                                                                               'ondelete': 'RESTRICT',
                                                                                               'onupdate': 'CASCADE'}}})
-            execute(eng, meta)
-        return redirect('mainapp:dashboard')
+
+            elif form.cleaned_data.get('table_type') == 'other_interval':
+                collar_reference = request.POST.get('collar_reference')
+                if collar_reference and collar_reference.endswith('_collar'):
+                    m = re.search("_collar", collar_reference)
+                    dbsuffix = collar_reference[:m.start()]
+                elif collar_reference == 'collar':
+                    dbsuffix = ''
+
+                table_reference = request.POST.get('table_reference')
+                for column in meta.tables[table_reference].columns:
+                    if column.primary_key:
+                        pk = column.key
+                cols = {pk: {'coltypes': String,'nullable': False,'foreignkey': {'column': '{}.{}'.format(table_reference, pk),'ondelete': 'RESTRICT','onupdate': 'CASCADE'}}}
+
+            # formset
+            for form in formset:
+                name = form.cleaned_data.get('name')
+                tb_type = form.cleaned_data.get('tb_type')
+                if tb_type == 'String':
+                    tb_type = String
+                elif tb_type == 'Float':
+                    tb_type = Float
+                elif tb_type == "Integer":
+                    tb_type = Integer
+                nullable = form.cleaned_data.get('nullable')
+                # data.append({'name':name,'tb_type':tb_type,'nullable':nullable})
+                cols[name] = {'coltypes':tb_type, 'nullable': nullable}
+
+            og_add_interval(eng, meta, table_name=table_name, cols=cols, dbsuffix = dbsuffix)
+            try:
+                execute(eng, meta)
+            except exc.NoReferencedTableError:
+                msg = "Please verify: there are tables really does not exists or are wrong."
+                messages.add_message(request, messages.WARNING, msg)
+                return redirect(reverse('mainapp:reflector'))
+        else:
+            return render(request,'mainapp/add_table.html',{'form': form, 'formset':formset})
+        return redirect('mainapp:reflector')
 
 def verify(request, table_key):
     engineURL = request.session.get('engineURL')
@@ -442,6 +483,19 @@ def verify(request, table_key):
         messages.add_message(request, messages.WARNING, errors)
 
     return redirect(reverse('mainapp:reflector', kwargs={'table_key': table_key}))
+
+def get_collar_tables_in_json(request):
+    engineURL = request.session.get('engineURL')
+    reflector = Reflector(engineURL)
+    reflector.reflectTables()
+    data = tb_data(reflector, table_key = 'OG_SMDH_SYSTEM')
+    content = {'collars':[],'references':[]}
+    for row in data:
+        if row[1] == 'definition (collar)':
+            content['collars'].append(row[0])
+        if row[1] == 'reference':
+            content['references'].append(row[0])
+    return JsonResponse({'content': content})
 
 def logout_user(request):
     logout(request)

@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import url, include
 import views
 urlpatterns = [
                 url(r'^$', views.index, name='index'),
@@ -14,4 +14,5 @@ urlpatterns = [
                 url(r'^update/(?P<table_key>\w+)/(?P<oid>[\w\.,-]+)/$', views.generic_add, name='generic_update'),
                 url(r'^get_folder_content_in_json/$', views.get_folder_content_in_json, name='get_folder_content_in_json'),
                 url(r'^close_connection/$', views.close_connection, name='close_connection'),
+                url(r'^get_collar_tables_in_json/$', views.get_collar_tables_in_json, name='get_collar_tables_in_json'),
 ]

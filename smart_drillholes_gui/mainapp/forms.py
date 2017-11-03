@@ -6,6 +6,13 @@ DB_TYPE_CHOICES = (
     (u'sqlite', u"SQLite"),
     (u'postgresql', u"PostgreSQL")
 )
+
+TYPE_CHOICES = (
+    (u'String', u"STRING"),
+    (u'Float', u"FLOAT"),
+    (u'Integer', u"INTEGER")
+)
+
 TABLE_TYPE_CHOICES = (
     ('References',(
     (u'assay_certificate', u"Assay Certificate"),
@@ -60,7 +67,7 @@ class NewForm(forms.Form):
                                 )
 
 class AddTableForm(forms.Form):
-    name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+    table_name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
                                                          'placeholder': 'Set a name for the table'}))
     table_type = forms.ChoiceField(widget=forms.Select(attrs={'required': True,
@@ -114,3 +121,18 @@ class MyBaseModelForm(BaseModelForm):
 
 class MyModelForm(six.with_metaclass(ModelFormMetaclass, MyBaseModelForm)):
     pass
+
+class FormTableColumn(forms.Form):
+    name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
+                                                         'class': 'form-control inp_name',
+                                                         'placeholder': 'name'}),
+                                                         label="Column Name:"
+                                                         )
+
+    tb_type = forms.ChoiceField(widget=forms.Select(attrs={'required': True,
+                                                           'class': 'form-control'}),
+                                choices=TYPE_CHOICES,
+                                label="Column Type:"
+                                )
+
+    nullable = forms.BooleanField(required=False ,widget=forms.CheckboxInput(attrs={'class':'form-control align-self-center;','style':'margin-top:7px;'}))
