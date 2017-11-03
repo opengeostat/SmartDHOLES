@@ -237,3 +237,24 @@ def connection_str(request, clean = False):
     if eng == None or db_tp == None or db_nm == None:
         return False
     return True
+
+#-8----------------------------------------------------------#
+#this function return the data from database table
+def tb_data(reflector, table_key = '', session = None):
+    if reflector.is_reflected():
+        if session == None:
+            session = reflector.make_session()
+
+        if table_key != '':
+            try:
+                table = reflector.getOg_table(table_key)
+            except KeyError:
+                raise
+            dat = session.query(reflector.get_metadata().tables[table_key]).all()
+        else:
+            return []
+
+
+        session.close()
+        del reflector
+    return dat

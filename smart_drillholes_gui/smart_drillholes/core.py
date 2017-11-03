@@ -254,8 +254,9 @@ def og_add_interval(eng, meta, table_name, cols={}, dbsuffix=""):
         if 'foreignkey' in cols[col]:
             fk = ForeignKey(column=cols[col]['foreignkey']['column'],
                             ondelete=cols[col]['foreignkey']['ondelete'],
-                            onupdate=cols[col]['foreignkey']['onupdate'])
-            tmpcol = Column(col, None, fk)
+                            onupdate=cols[col]['foreignkey']['onupdate'],
+                            )
+            tmpcol = Column(col, None, fk, nullable=cols[col]['nullable'])
         else:
             tmpcol = Column(col, cols[col]['coltypes'], nullable=cols[col]['nullable'])
 
