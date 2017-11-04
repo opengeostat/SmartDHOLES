@@ -2,7 +2,7 @@
 {% block title %}SmartDHOLES|New DB{% endblock %}
 {% block content %}
 <div class="col-md-6 mx-auto">
-  <div style="margin-top:20px;">  
+  <div style="margin-top:20px;">
     {% if messages %}
     {% for message in messages %}
     <div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
@@ -31,7 +31,7 @@
   </form>
 </div>
 {% if files_explorer %}
-<div class="card mt-3" id="files_explorer">
+<div class="card my-3" id="files_explorer">
   <div class="card-header">
     <h6 id="current_path_display">/</h6>
   </div>

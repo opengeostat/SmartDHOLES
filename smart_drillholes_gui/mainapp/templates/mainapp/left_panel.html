@@ -1,18 +1,18 @@
-<div class="col-12 col-md-3 col-xl-2 bd-sidebar bg-dark p-0" role="navigation" id="left-panel">
+<div class="col-12 col-md-3 col-xl-2 bd-sidebar bg-light p-0" role="navigation" id="left-panel">
 
       <ul class="nav flex-column left-panel" style="height: 100%;">
         <li class="nav-item left-panel-droopdown clearfix" status="closed">
-          <a class="nav-link text-light" href="#">
+          <a class="nav-link text-dark" href="#">
             <i class="fa fa-th"></i> Tables <i class="float-right fa fa-caret-right"></i>
           </a>
         </li>
 
         <ul id="left-panel-tables" class="nav flex-column" style="display:none;" role="menu">
           {% for table_name in tks %}
-          <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-light" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
+          <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-dark" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
           {% endfor %}
         </ul>
-        <li class="nav-item"><a class="nav-link text-light" href="{% url 'mainapp:add_table' %}">Add Table</a></li>
-        <li class="nav-item"><a class="nav-link text-light" href="#">Remove Table</a></li>
+        <li class="nav-item"><a class="nav-link text-dark" href="{% url 'mainapp:add_table' %}">Add Table</a></li>
+        <li class="nav-item"><a class="nav-link text-dark" href="#">Remove Table</a></li>
       </ul>
 </div>

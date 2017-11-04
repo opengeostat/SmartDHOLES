@@ -1,15 +1,36 @@
 .left-panel a:hover{
-    background: rgba(0,0,0,0.2);
-}
-#left-panel-tables{
-    background: rgba(0,0,0,0.1);
+    background: #f0f0f0;
 }
 #left-panel{
-    min-height: calc(100vh - 3.5rem);
+  border-right: 1px solid #eee;
 }
-.active >.nav-link{
-  padding-top:0.25rem!important;
-  padding-bottom:0.75rem!important;
+#site-navbar{
+  padding: 0 1rem;
+}
+#site-navbar #navbar .nav-link{
+  padding: 1rem;
+  color: #fff;
+}
+#site-navbar #navbar .active{
+  background: #006fe6;
+}
+#left-panel-tables{
+    background: #f5f5f5;
+}
+#left-panel, #page-content{
+    min-height: calc(100vh - 23.2rem);
+}
+#page-footer{
+  border-top:1px solid #eee;
+}
+#page-footer .social-small,#page-footer .social-transition{
+  font-size: 3rem;
+}
+#page-footer .social-transition{
+  transition: font-size 0.15s
+}
+#page-footer .social-transition:hover{
+  font-size:3.5rem;
 }
 .path{
   cursor: pointer;

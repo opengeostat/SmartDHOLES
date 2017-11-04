@@ -17,44 +17,48 @@
 
   <body>
 
-    <nav class="navbar navbar-dark navbar-expand-lg bg-info">
+    <nav class="navbar navbar-dark navbar-expand-lg bg-primary" id="site-navbar">
       {% with request.resolver_match.view_name as urlname %}
       <div class="container-fluid">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <button type="button" class="navbar-toggler collapsed my-2 mr-2" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
             <span class="navbar-toggler-icon"></span>
           </button>
           <a class="navbar-brand" href="{% url 'mainapp:index' %}">Smart Drillholes</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
+          <div class="mr-auto">
           <ul class="nav navbar-nav">
-            <li{% if urlname == 'mainapp:index' %} class="nav-item active"{% endif %}><a class="nav-link" href="{% url 'mainapp:index' %}">Home</a></li>
+            <li{% if urlname == 'mainapp:index' %} class="nav-item active"{% endif %}><a class="nav-link d-inline-block" href="{% url 'mainapp:index' %}">Home</a></li>
             <li{% if urlname == 'mainapp:new' %} class="nav-item active"{% endif %}><a class="nav-link" href="{% url 'mainapp:new' %}">New</a></li>
             <li{% if urlname == 'mainapp:open' %} class="nav-item active"{% endif %}><a class="nav-link" href="{% url 'mainapp:open' %}">Open</a></li>
           </ul>
-        </div><!--/.nav-collapse -->
-        <div id="navbar" class="collapse navbar-collapse justify-content-end">
+        </div>
+        <div class="ml-auto">
           <ul class="nav navbar-nav">
             {% if user.is_authenticated %}
             {% if request.session.engineURL %}
               <li class="nav-item{% if urlname == 'mainapp:dashboard' %} active{% endif %} pull-sm-right"><a class="nav-link" href="{% url 'mainapp:dashboard' %}"><span class="fa fa-list-alt"></span></a></li>
             {% endif %}
-            <li class="nav-item pull-sm-right"><a class="nav-link">{{ request.user.username }}</a></li>
+            <li class="nav-item pull-sm-right"><b class="nav-link">{{ request.user.username }}</b></li>
             <li {% if ref == 'new' %} class="nav-item pull-sm-right"{% endif %}><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
             {% else %}
             <li class="nav-item pull-sm-right"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
             {% endif %}
           </ul>
-        </div><!--/.nav-collapse -->
+        </div>
+      </div><!--/.nav-collapse -->
       </div>
       {% endwith %}
     </nav>
 
-    <div class="container-fluid">
+    <div class="container-fluid" id="page-content">
       {% block content %}
       {% endblock %}
 
-    </div><!-- /.container -->
+    </div>
+    {% include "mainapp/footer.html" %}
+    <!-- /.container -->
     <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
     <script src="{% static 'js/popper.min.js' %}"></script>
     <script src="{% static 'js/npm.js' %}"></script>
