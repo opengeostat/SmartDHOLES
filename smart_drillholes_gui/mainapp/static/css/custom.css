@@ -4,6 +4,9 @@
 #left-panel-tables{
     background: rgba(0,0,0,0.1);
 }
+#left-panel{
+    min-height: calc(100vh - 3.5rem);
+}
 .path{
   cursor: pointer;
 }
