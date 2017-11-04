@@ -7,6 +7,10 @@
 #left-panel{
     min-height: calc(100vh - 3.5rem);
 }
+.active >.nav-link{
+  padding-top:0.25rem!important;
+  padding-bottom:0.75rem!important;
+}
 .path{
   cursor: pointer;
 }

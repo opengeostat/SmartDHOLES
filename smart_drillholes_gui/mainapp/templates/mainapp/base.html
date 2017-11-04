@@ -18,6 +18,7 @@
   <body>
 
     <nav class="navbar navbar-dark navbar-expand-lg bg-info">
+      {% with request.resolver_match.view_name as urlname %}
       <div class="container-fluid">
         <div class="navbar-header">
           <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -27,14 +28,17 @@
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li{% if ref == 'new' %} class="nav-item"{% endif %}><a class="nav-link" href="{% url 'mainapp:new' %}">New</a></li>
-            <li{% if ref == 'open' %} class="nav-item"{% endif %}><a class="nav-link" href="{% url 'mainapp:open' %}">Open</a></li>
+            <li{% if urlname == 'mainapp:index' %} class="nav-item active"{% endif %}><a class="nav-link" href="{% url 'mainapp:index' %}">Home</a></li>
+            <li{% if urlname == 'mainapp:new' %} class="nav-item active"{% endif %}><a class="nav-link" href="{% url 'mainapp:new' %}">New</a></li>
+            <li{% if urlname == 'mainapp:open' %} class="nav-item active"{% endif %}><a class="nav-link" href="{% url 'mainapp:open' %}">Open</a></li>
           </ul>
         </div><!--/.nav-collapse -->
         <div id="navbar" class="collapse navbar-collapse justify-content-end">
           <ul class="nav navbar-nav">
             {% if user.is_authenticated %}
-            <li class="nav-item pull-sm-right"><a class="nav-link" href="{% url 'mainapp:index' %}"><span class="fa fa-home"></span></a></li>
+            {% if request.session.engineURL %}
+              <li class="nav-item{% if urlname == 'mainapp:dashboard' %} active{% endif %} pull-sm-right"><a class="nav-link" href="{% url 'mainapp:dashboard' %}"><span class="fa fa-list-alt"></span></a></li>
+            {% endif %}
             <li class="nav-item pull-sm-right"><a class="nav-link">{{ request.user.username }}</a></li>
             <li {% if ref == 'new' %} class="nav-item pull-sm-right"{% endif %}><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
             {% else %}
@@ -43,6 +47,7 @@
           </ul>
         </div><!--/.nav-collapse -->
       </div>
+      {% endwith %}
     </nav>
 
     <div class="container-fluid">
