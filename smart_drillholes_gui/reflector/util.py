@@ -5,6 +5,16 @@ from django.db                  import models
 from sqlalchemy                 import Column, create_engine, exc
 from error                      import EmptyError
 from django.core.validators     import RegexValidator
+
+#-1-create_model
+#-2-defineObject
+#-3-update
+#-4-pg_create
+#-5-fields_generator
+#-6-reflect
+#-7-connection_str
+#-8-tb_data
+
 #-1------------------Dinamic Model------------------------#
 def create_model(name, attrs={}, meta_attrs={}, module_path='django.db.models'):
     attrs['__module__'] = module_path

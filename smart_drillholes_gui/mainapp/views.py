@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__                     import unicode_literals
-from .forms                         import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm, MyModelForm, AppUserForm, GenericModelForm, FormTableColumn
+from .forms                         import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm,MyModelForm, AppUserForm, GenericModelForm, FormTableColumn
 from sqlalchemy.ext.declarative     import declarative_base
 from sqlalchemy                     import String, Float, Integer, exc #(exc: Exceptions)
 from reflector.og_reflector         import Reflector
@@ -403,33 +403,63 @@ def add_table(request):
     elif request.method == 'POST':
         form = AddTableForm(request.POST)
         formset = RowFormset(request.POST)
+
         if form.is_valid() and formset.is_valid():
             table_name = form.cleaned_data.get('table_name')
+            reflector = get_reflector(request)
+            exist = reflector.exist_table(table_name)
+
+            if exist:
+                msg = "The table '{}', already exist.".format(table_name)
+                messages.add_message(request, messages.INFO, msg)
+                return render(request,'mainapp/add_table.html',{'form': form, 'formset':formset})
+
+            formset_cols = {}
+
+            # formset
+            for fform in formset:
+                name = fform.cleaned_data.get('name')
+                tb_type = fform.cleaned_data.get('tb_type')
+                if tb_type == 'String':
+                    tb_type = String
+                elif tb_type == 'Float':
+                    tb_type = Float
+                elif tb_type == "Integer":
+                    tb_type = Integer
+                nullable = fform.cleaned_data.get('nullable')
+                formset_cols[name] = {'coltypes':tb_type, 'nullable': nullable}
+
             if form.cleaned_data.get('table_type') == 'assay_certificate':
-                og_references(eng, meta, table_name=table_name, key='SampleID', cols={'Au': {'coltypes': Float,
-                                                                                   'nullable': True}})
+                cols = {'Au': {'coltypes': Float,'nullable': True}}
+                cols.update(formset_cols)
+                og_references(eng, meta, table_name=table_name, key='SampleID', cols=cols)
             elif form.cleaned_data.get('table_type') == 'rock_catalog':
-                og_references(eng, meta, table_name=table_name, key='RockID', cols={'Description': {'coltypes': String,
-                                                                                                        'nullable': True}})
+                cols = {'Description': {'coltypes': String,'nullable': True}}
+                cols.update(formset_cols)
+                og_references(eng, meta, table_name=table_name, key='RockID', cols=cols)
             elif form.cleaned_data.get('table_type') == 'assay':
                 for column in meta.tables['assay_certificate'].columns:
                     if column.primary_key:
                         pk = column.key
-                og_add_interval(eng, meta, table_name=table_name, cols={'SampleID': {'coltypes': String,
-                                                                                  'nullable': False,
-                                                                                  'foreignkey': {'column': '{}.{}'.format(table, pk),
-                                                                                                 'ondelete': 'RESTRICT',
-                                                                                                 'onupdate': 'CASCADE'}}})
+                cols = {'SampleID': {'coltypes': String,
+                                    'nullable': False,
+                                    'foreignkey': {'column': '{}.{}'.format(table, pk),
+                                                'ondelete': 'RESTRICT',
+                                                'onupdate': 'CASCADE'}}}
+                cols.update(formset_cols)
+                og_add_interval(eng, meta, table_name=table_name, cols=cols)
             elif form.cleaned_data.get('table_type') == 'litho':
                 table = form.cleaned_data.get('foreignkey')
                 for column in meta.tables[table].columns:
                     if column.primary_key:
                         pk = column.key
-                og_add_interval(eng, meta, table_name=table_name, cols={'RockID':{'coltypes': String,
-                                                                               'nullable': True,
-                                                                               'foreignkey': {'column': '{}.{}'.format(table, pk),
-                                                                                              'ondelete': 'RESTRICT',
-                                                                                              'onupdate': 'CASCADE'}}})
+                cols = {'RockID':{'coltypes': String,
+                                'nullable': True,
+                                'foreignkey': {'column': '{}.{}'.format(table, pk),
+                                            'ondelete': 'RESTRICT',
+                                            'onupdate': 'CASCADE'}}}
+                cols.update(formset_cols)
+                og_add_interval(eng, meta, table_name=table_name, cols=cols)
 
             elif form.cleaned_data.get('table_type') == 'other_interval':
                 collar_reference = request.POST.get('collar_reference')
@@ -444,28 +474,16 @@ def add_table(request):
                     if column.primary_key:
                         pk = column.key
                 cols = {pk: {'coltypes': String,'nullable': False,'foreignkey': {'column': '{}.{}'.format(table_reference, pk),'ondelete': 'RESTRICT','onupdate': 'CASCADE'}}}
-
-            # formset
-            for form in formset:
-                name = form.cleaned_data.get('name')
-                tb_type = form.cleaned_data.get('tb_type')
-                if tb_type == 'String':
-                    tb_type = String
-                elif tb_type == 'Float':
-                    tb_type = Float
-                elif tb_type == "Integer":
-                    tb_type = Integer
-                nullable = form.cleaned_data.get('nullable')
-                # data.append({'name':name,'tb_type':tb_type,'nullable':nullable})
-                cols[name] = {'coltypes':tb_type, 'nullable': nullable}
-
-            og_add_interval(eng, meta, table_name=table_name, cols=cols, dbsuffix = dbsuffix)
+                cols.update(formset_cols)
+                og_add_interval(eng, meta, table_name=table_name, cols=cols, dbsuffix = dbsuffix)
             try:
                 execute(eng, meta)
             except exc.NoReferencedTableError:
                 msg = "Please verify: there are tables really does not exists or are wrong."
                 messages.add_message(request, messages.WARNING, msg)
                 return redirect(reverse('mainapp:reflector'))
+            except:
+                raise
         else:
             return render(request,'mainapp/add_table.html',{'form': form, 'formset':formset})
         return redirect('mainapp:reflector')
@@ -554,3 +572,10 @@ def get_folder_content(path=None):
     except OSError:
         return False
     return {"files":files,"folders":folders,"path":path,"previous_path":os.path.dirname(os.path.dirname(path))}
+
+#this function return reflector object of request engine
+def get_reflector(request):
+    engineURL = request.session.get('engineURL')
+    reflector = Reflector(engineURL)
+    reflector.reflectTables()
+    return reflector
