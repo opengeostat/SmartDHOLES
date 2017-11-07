@@ -5,6 +5,17 @@
 {% block content %}
 <div class="container">
   <div class="col-6 mx-auto" style="margin-top:20px;">
+    <div style="margin-top:20px;">
+      {% if messages %}
+      {% for message in messages %}
+      <div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ message }}
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+
     {% if formset.non_form_errors %}
     <div class=" alert alert-warning alert-dismissable">
       <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -109,24 +120,27 @@
 <script src="{% static 'js/inlineform/django-inline-form.js' %}"></script>
 <script>
 $(document).ready(function(){
+
   $('#add-column').djangoInlineFormAdd({
     prefix: "form",
   });
 
-
-$('.inp_name').change(function(evento){
-  if ($(this).value == "lolo"){
-$('#create_btn').attr('disabled','disabled');
-$(this).addClass('is-invalid');
-$(this).after('<div class="invalid-feedback">This column name already exist.</div>');
-}
-else {
-  $('#create_btn').removeAttr()('disabled');
-  $(this).addClass('is-invalid');
-  $('.invalid-feedback').remove();
-}
-});
-
+//
+// $('.inp_name').change(function(evento){
+//
+//
+//   if (this.value == "lolo"){
+//     alert("lolo");
+// $('#create_btn').attr('disabled','disabled');
+// $(this).addClass('is-invalid');
+// $(this).after('<div class="invalid-feedback">This column name already exist.</div>');
+// }
+// else {
+//   $('#create_btn').removeAttr()('disabled');
+//   $(this).addClass('is-invalid');
+//   $('.invalid-feedback').remove();
+// }
+// });
 
 $("#id_table_type").change(function(evento){
   if(this.value == 'other_interval'){
