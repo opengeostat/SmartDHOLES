@@ -69,7 +69,9 @@ class NewForm(forms.Form):
 class AddTableForm(forms.Form):
     table_name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control',
-                                                         'placeholder': 'Set a name for the table'}))
+                                                         'placeholder': 'Set a name for the table',
+                                                         'pattern': '[a-zA-Z0-9]+\w*[a-zA-Z0-9]+'
+                                                         }))
     table_type = forms.ChoiceField(widget=forms.Select(attrs={'required': True,
                                                               'class': 'form-control custom-select'}),
                                    choices=TABLE_TYPE_CHOICES,
@@ -125,7 +127,9 @@ class MyModelForm(six.with_metaclass(ModelFormMetaclass, MyBaseModelForm)):
 class FormTableColumn(forms.Form):
     name = forms.CharField(widget=forms.TextInput(attrs={'required': True,
                                                          'class': 'form-control inp_name',
-                                                         'placeholder': 'name'}),
+                                                         'placeholder': 'name',
+                                                         'onchange': 'myinput(this);',
+                                                         'pattern':'[a-zA-Z0-9]+\w*[a-zA-Z0-9]+'}),
                                                          label="Column Name:"
                                                          )
 

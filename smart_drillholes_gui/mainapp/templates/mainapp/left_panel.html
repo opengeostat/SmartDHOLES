@@ -3,16 +3,16 @@
       <ul class="nav flex-column left-panel" style="height: 100%;">
         <li class="nav-item left-panel-droopdown clearfix" status="closed">
           <a class="nav-link text-dark" href="#">
-            <i class="fa fa-th"></i> Tables <i class="float-right fa fa-caret-right"></i>
+            <i class="fa fa-table"></i> Tables <i class="float-right fa fa-caret-right"></i>
           </a>
         </li>
 
         <ul id="left-panel-tables" class="nav flex-column" style="display:none;" role="menu">
           {% for table_name in tks %}
-          <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-dark" href="{% url 'mainapp:reflector' table_name %}">{{ table_name }}</a></li>
+          <li class="nav-item"><a data-toggle="tooltip" data-placement="right" title="{{ table_name }}" class="nav-link pl-4 text-truncate text-dark" href="{% url 'mainapp:reflector' table_name %}">{{ table_name|truncatechars:20 }}</a></li>
           {% endfor %}
         </ul>
-        <li class="nav-item"><a class="nav-link text-dark" href="{% url 'mainapp:add_table' %}">Add Table</a></li>
-        <li class="nav-item"><a class="nav-link text-dark" href="#">Remove Table</a></li>
+        <li class="nav-item"><a class="nav-link text-dark" href="{% url 'mainapp:add_table' %}"><i style="color:green;" class="fa fa-plus-square-o"></i> Add Table<i class="float-right"></i></a></li>
+        <li class="nav-item"><a class="nav-link text-dark" href="#"><i style="color:red;" class="fa fa-minus-square-o"></i> Remove Table<i class="float-right"></i></a></li>
       </ul>
 </div>

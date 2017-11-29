@@ -1,5 +1,6 @@
 {% extends "mainapp/base.html" %}
 {% load static %}
+{% load customfilters %}
 {% block title %}SmartDHOLES|Add new table{% endblock %}
 
 {% block content %}
@@ -33,6 +34,9 @@
         {{ form.table_name.label_tag }}
         {{ form.table_name }}
       </div>
+       <div id="extra_fields">
+
+       </div>
 
       {# columns formset #}
       {{ formset.management_form }}
@@ -64,8 +68,6 @@
            class="col-form-label text-center" style="padding-top:0px;"><strong>N:</strong></label>
           {{ form.nullable }}
         </div>
-
-
       </div>
     </div>
     {% endfor %}
@@ -96,7 +98,7 @@
     <div class="form-row well well-lg">
       <div class="form-group col-md-7">
 
-        <input name="form-__prefix__-name" required="" placeholder="name" class="inp_name form-control" id="id_form-__prefix__-name" type="text">
+        <input pattern='[a-zA-Z0-9]+\w*[a-zA-Z0-9]+' onchange="myinput(this);" name="form-__prefix__-name" required="" placeholder="name" class="inp_name form-control" id="id_form-__prefix__-name" type="text">
       </div>
       <div class="form-group col-md-4">
 
@@ -118,6 +120,40 @@
 {% endblock %}
 {% block javascript %}
 <script src="{% static 'js/inlineform/django-inline-form.js' %}"></script>
+
+<script type="text/javascript">
+function myinput(input){
+  inp_value = input.value;
+
+  var values = [];
+  $(".inp_name").each(
+    function ()
+    {
+      if (!($(input).attr("id") == $(this).attr("id"))){
+        values.push(this.value);
+        }
+    });
+
+    if (values.includes(inp_value)){
+      $(input).removeClass('is-invalid');
+      $('.invalid-feedback').remove();
+      $('#create_btn').attr('disabled','disabled');
+      $('#add-column').attr('disabled','disabled');
+      $('#form-delete').attr('disabled','disabled');
+      $(input).addClass('is-invalid');
+      $(input).after('<div class="invalid-feedback">This column name already exist.</div>');
+    }
+    else {
+      $('#create_btn').removeAttr('disabled');
+      $('#add-column').removeAttr('disabled');
+      $('#form-delete').removeAttr('disabled');
+      $(input).removeClass('is-invalid');
+      $('.invalid-feedback').remove();
+    }
+
+  }
+  </script>
+
 <script>
 $(document).ready(function(){
 
@@ -125,30 +161,37 @@ $(document).ready(function(){
     prefix: "form",
   });
 
-//
-// $('.inp_name').change(function(evento){
-//
-//
-//   if (this.value == "lolo"){
-//     alert("lolo");
-// $('#create_btn').attr('disabled','disabled');
-// $(this).addClass('is-invalid');
-// $(this).after('<div class="invalid-feedback">This column name already exist.</div>');
-// }
-// else {
-//   $('#create_btn').removeAttr()('disabled');
-//   $(this).addClass('is-invalid');
-//   $('.invalid-feedback').remove();
-// }
-// });
+var max = $('#id_form-MAX_NUM_FORMS').attr('value');
+init("assay_certificate");
+set_fieldkey('SampleID');
 
 $("#id_table_type").change(function(evento){
-  if(this.value == 'other_interval'){
+  if(this.value == 'assay'){
+    $('#extra_fields').empty();
+    $('#form-container').empty();
+    clear_fgkey_Fields();
+    get_references();
+    add_colTable(max);
+  }
+  if(this.value == 'litho'){
+    $('#extra_fields').empty();
+    $('#form-container').empty();
+    clear_fgkey_Fields();
+    get_references();
+    add_colTable(max);
+  }
+
+  else if(this.value == 'other_interval'){
+    $('#extra_fields').empty();
+    $('#form-container').empty();
+    clear_fgkey_Fields();
+    add_colTable(max);
+
     $.ajax({
       method: "POST",
-      url: '{% url "mainapp:get_collar_tables_in_json" %}',
+      url: '{% url "mainapp:get_collar_reference_tables_in_json" %}',
       data: {
-        'path': "lolo",
+        'path': "null_path",
       },
       dataType: 'json',
       success: function(data) {
@@ -178,11 +221,103 @@ $("#id_table_type").change(function(evento){
     });
   }
   else if (this.value == 'other_reference'){
-    $('div#fg_collar_reference').remove();
-    $('div#fg_table_reference').remove();
+    clear_fgkey_Fields();
+    $('#form-container').empty();
+    add_colTable(max);
+    set_fieldkey('');
+  }
+
+  else if (this.value == 'assay_certificate'){
+    clear_fgkey_Fields();
+    $('#form-container').empty();
+    add_colTable(max);
+    set_fieldkey('SampleID');
+    init("assay_certificate");
+  }
+  else if (this.value == 'rock_catalog'){
+    clear_fgkey_Fields();
+    $('#form-container').empty();
+    add_colTable(max);
+    set_fieldkey('RockID');
+    init("rock_catalog");
   }
 });
 });
+
+function init(table_type){
+  if(table_type == "assay_certificate"){
+  $('#id_form-0-name').attr("value","Au");
+  $('#id_form-0-tb_type option:nth(1)').attr("selected",true);
+  $('#id_form-0-nullable').attr("checked",true);
+  }
+  else if(table_type == "rock_catalog"){
+    $('#id_form-0-name').attr("value","Description");
+    $('#id_form-0-nullable').attr("checked",true);
+  }
+}
+
+function set_fieldkey(pkey){
+  $('#extra_fields').empty();
+  var field = "<div id='field_table_pkey' class='form-group'>"+
+  "<label for='id_table_pkey'>Table key:</label>"+
+  "<input pattern='[a-zA-Z0-9]+[a-zA-Z0-9_]*[a-zA-Z0-9]+' value='"+pkey+"' name='ftable_key' required='' placeholder='Set a key for the table' class='form-control' id='id_table_pkey' type='text'>"+
+  "</div>";
+  $('#extra_fields').append(field);
+}
+
+function add_colTable(max){
+  var count = $('#form-container').children().length;
+  if (count >= max) {
+    console.log('exceeded max inline forms');  // should maybe have a callback option
+    return;
+  }
+  var tmplMarkup = $('#form-template').html();
+
+  var compiledTmpl = tmplMarkup.replace(/__prefix__/g, count);
+  $('#form-container').append(compiledTmpl);
+
+  // animate it
+  $('#form-container').children().last().show('slow');
+  // update form count
+  $('#id_form-TOTAL_FORMS').attr('value', count+1);
+
+  // some animate to scroll to view our new form
+  var formHeight = 0;
+  if(formHeight != null) {
+    $('html, body').animate({
+      scrollTop: $(window).scrollTop() + formHeight
+    }, 800);
+  }
+}
+
+function clear_fgkey_Fields(){
+  $('div#fg_collar_reference').remove();
+  $('div#fg_table_reference').remove();
+}
+
+function get_references(){
+  $.ajax({
+    method: "POST",
+    url: '{% url "mainapp:get_collar_reference_tables_in_json" %}',
+    data: {
+      'path': "null_path",
+    },
+    dataType: 'json',
+    success: function(data) {
+      if (data.content.references){
+        reference_select =
+        "<div id='fg_table_reference' class='form-group'>"+
+        "<label for='id_table_reference'>Reference:</label>"+
+        "<select name='table_reference' required='' class='form-control custom-select' id='id_table_reference'>"
+        for(var i = 0; i < data.content.references.length; i++) {
+          reference_select += "<option value='"+data.content.references[i]+"'>"+data.content.references[i]+"</option>"
+        }
+        reference_select += "</select></div>"
+        $("div#fg_table_name").after(reference_select);
+      }
+    }
+  });
+}
 
 </script>
 {% endblock javascript %}
