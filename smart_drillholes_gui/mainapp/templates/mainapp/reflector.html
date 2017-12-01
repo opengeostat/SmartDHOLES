@@ -6,6 +6,10 @@
 
 {% include "mainapp/left_panel.html" %}
 <div class="col-12 col-md-9 col-xl-10">
+{% if table_key == "OG_SMDH_SYSTEM" %}
+{% include "mainapp/OG_SMDH_SYSTEMinfo.html" %}
+{% endif %}
+
   <div style="margin-top:20px;">
     {% if messages %}
     {% for message in messages %}
@@ -21,7 +25,10 @@
 {% csrf_token %}
 <input type="hidden" name="tablename" value={{ table_key }}>
   <div class="table-responsive">
-  <h6 class="text-muted mt-2 pull-left">smart drillholes table: <strong>{{table_key}}</strong></h6>
+  <h6 class="text-muted mt-2 pull-left">smart drillholes table: <strong>{{table_key}}</strong>
+    {% if table_key == "OG_SMDH_SYSTEM" %}<a style="outline: none;" data-toggle="collapse" href="#collapseOGInfo" aria-expanded="true" aria-controls="collapseOGInfo">
+        <span class="fa fa-info-circle text-warning"></span>
+      </a>{% endif %}</h6>
   <button type="button" class="delete_modal_btn btn btn-warning btn-sm pull-right my-2"><span class="fa fa-trash"></span></button>
   <table class="table table-sm table-bordered table-striped" id="DB_Table">
   <thead class="table-inverse">

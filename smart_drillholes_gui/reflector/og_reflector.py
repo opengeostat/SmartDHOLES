@@ -48,7 +48,7 @@ class Reflector():
 
         self.table.setColumns(table.c)
 
-        self.og_tables[str(table.name)] = self.table
+        self.og_tables[str(table.name.encode('utf-8',errors='replace'))] = self.table
 
     def exist_table(self, table_key):
         if table_key in self.table_keys:

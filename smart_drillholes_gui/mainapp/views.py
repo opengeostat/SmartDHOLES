@@ -224,10 +224,11 @@ def new(request):
     elif request.method == "POST":
         form = NewForm(request.POST)
         if form.is_valid():
+            db_type = form.cleaned_data.get('db_type')
             dbname_to_create = form.cleaned_data.get('name')
-            if form.cleaned_data.get('db_type') == 'sqlite':
+            if db_type == 'sqlite':
                 con_string = 'sqlite:///{}.sqlite'.format(os.path.join(request.POST.get('current_path'), dbname_to_create))
-            elif form.cleaned_data.get('db_type') == 'postgresql':
+            elif db_type == 'postgresql':
                 try:
                     con_string = pg_create(user = 'gramvi_admin', password = 'password', dbname_to_create = dbname_to_create)
                 #database "lm" already exists
@@ -243,7 +244,7 @@ def new(request):
                 #Create drillhole definition tables in the metadata, collar and survey.
                 og_create_dhdef(eng, meta)
             except AssertionError as err:
-                if form.cleaned_data.get('db_type') == 'sqlite':
+                if db_type == 'sqlite':
                     messages.add_message(request, messages.WARNING, 'Database "%s" already exists on path: %s.'%(dbname_to_create,request.POST.get('current_path')))
                 else:
                     messages.add_message(request, messages.WARNING, str(err))
@@ -308,7 +309,7 @@ def new(request):
             #-END----------------------#
             request.session['engineURL'] = con_string
             request.session['db_type'] = db_type
-            request.session['db_name'] = dbName
+            request.session['db_name'] = dbname_to_create
             return redirect('mainapp:dashboard')
 
 def dashboard(request):
@@ -384,12 +385,9 @@ def reflector(request, table_key = ''):
 def add_table(request):
     if request.method in ['GET', 'POST']:
         RowFormset = formset_factory(FormTableColumn, extra=1, max_num=15)
-        #if request.COOKIES.get('db_type') == "sqlite":
-        if request.session.get('db_type') == "sqlite":
+        db_type = request.session.get('db_type')
+        if db_type == "sqlite" or db_type == "postgresql":
             #con_string = 'sqlite:///{}.sqlite'.format(request.COOKIES.get('db'))
-            con_string = request.session.get('engineURL')
-        #elif request.COOKIES.get('db_type') == "postgresql":
-        elif request.session.get('db_type') == "postgresql":
             #con_string = 'postgresql://postgres@localhost/{}'.format(request.COOKIES.get('db'))
             con_string = request.session.get('engineURL')
         eng, meta = og_connect(con_string)
@@ -427,40 +425,34 @@ def add_table(request):
                     tb_type = Integer
                 nullable = fform.cleaned_data.get('nullable')
                 formset_cols[name] = {'coltypes':tb_type, 'nullable': nullable}
+            table_type = form.cleaned_data.get('table_type')
+            #insert assay_certificate, rock_catalog, other_reference table types
+            if table_type == 'assay_certificate' or table_type == 'rock_catalog' or table_type == 'other_reference':
+                #defaults on template client side:
+                #cols = {'Au': {'coltypes': Float,'nullable': True}}
+                # on assay_certificate key=SampleID
+                # on rock_catalog key=RockID
+                # on other_reference key=''
+                table_key = request.POST.get('ftable_key')
+                cols = formset_cols
+                og_references(eng, meta, table_name=table_name, key=str(table_key), cols=cols)
 
-            if form.cleaned_data.get('table_type') == 'assay_certificate':
-                cols = {'Au': {'coltypes': Float,'nullable': True}}
-                cols.update(formset_cols)
-                og_references(eng, meta, table_name=table_name, key='SampleID', cols=cols)
-            elif form.cleaned_data.get('table_type') == 'rock_catalog':
-                cols = {'Description': {'coltypes': String,'nullable': True}}
-                cols.update(formset_cols)
-                og_references(eng, meta, table_name=table_name, key='RockID', cols=cols)
-            elif form.cleaned_data.get('table_type') == 'assay':
-                for column in meta.tables['assay_certificate'].columns:
+            elif table_type == 'assay' or table_type == 'litho':
+                # on this tables, collar foreignkey: collar.BHID
+                table_reference = request.POST.get('table_reference')
+                for column in meta.tables[table_reference].columns:
                     if column.primary_key:
                         pk = column.key
-                cols = {'SampleID': {'coltypes': String,
-                                    'nullable': False,
-                                    'foreignkey': {'column': '{}.{}'.format(table, pk),
-                                                'ondelete': 'RESTRICT',
-                                                'onupdate': 'CASCADE'}}}
-                cols.update(formset_cols)
-                og_add_interval(eng, meta, table_name=table_name, cols=cols)
-            elif form.cleaned_data.get('table_type') == 'litho':
-                table = form.cleaned_data.get('foreignkey')
-                for column in meta.tables[table].columns:
-                    if column.primary_key:
-                        pk = column.key
-                cols = {'RockID':{'coltypes': String,
-                                'nullable': True,
-                                'foreignkey': {'column': '{}.{}'.format(table, pk),
+                cols = {pk:{'coltypes': String,
+                                'nullable': False,
+                                'foreignkey': {'column': '{}.{}'.format(table_reference, pk),
                                             'ondelete': 'RESTRICT',
                                             'onupdate': 'CASCADE'}}}
                 cols.update(formset_cols)
                 og_add_interval(eng, meta, table_name=table_name, cols=cols)
-
-            elif form.cleaned_data.get('table_type') == 'other_interval':
+            #other_interval
+            elif table_type == 'other_interval':
+                # on this tables, collar foreignkey: dbsuffix+_collar.BHID
                 collar_reference = request.POST.get('collar_reference')
                 if collar_reference and collar_reference.endswith('_collar'):
                     m = re.search("_collar", collar_reference)
@@ -483,6 +475,31 @@ def add_table(request):
                 return redirect(reverse('mainapp:reflector'))
             except:
                 raise
+            #-Register table on system table: OG_SMDH_SYSTEM------------------------#
+            og_register_table = 'OG_SMDH_SYSTEM'
+
+            if table_type == 'other_interval' or table_type == 'assay' or table_type == 'litho':
+                tbtype = 'interval'
+            elif table_type == 'assay_certificate' or table_type == 'rock_catalog' or table_type == 'other_reference':
+                tbtype = 'reference'
+            tdata = {'Table':table_name,'Type':tbtype,'Comments':''}
+            reflector = Reflector(con_string)
+            reflector.reflectTables()
+            table = reflector.getOg_table(og_register_table)
+            Base = declarative_base()
+            generic_object = type(str(og_register_table), (Base,), defineObject(table))
+
+            session = reflector.make_session()
+            Object_table = generic_object(**tdata)
+            session.add(Object_table)
+            try:
+                session.commit()
+                #session.flush()
+            except:
+                session.rollback()
+            finally:
+                session.close()
+            #end register
         else:
             return render(request,'mainapp/add_table.html',{'form': form, 'formset':formset})
         return redirect('mainapp:reflector')
@@ -502,7 +519,7 @@ def verify(request, table_key):
 
     return redirect(reverse('mainapp:reflector', kwargs={'table_key': table_key}))
 
-def get_collar_tables_in_json(request):
+def get_collar_reference_tables_in_json(request):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
     reflector.reflectTables()

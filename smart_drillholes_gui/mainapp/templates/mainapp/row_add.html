@@ -1,5 +1,6 @@
 {% extends 'mainapp/base.html' %}
 {% load staticfiles %}
+{% load customfilters %}
 {% block content %}
 <div class="col-md-6 mx-auto" style="margin-top:20px; margin-bottom:20px;">
 <h1>{{ action.0 }} {{ table_key }}</h1>
@@ -37,7 +38,7 @@
         {% endif %}
 
         <div class="form-group">
-          <label for="{{ field.id_for_label }}">{{ field.label }}:</label>
+          <label for="{{ field.id_for_label }}">{{ field.label|repl:" " }}</label>
           <div>
             {{ field }}
           </div>
