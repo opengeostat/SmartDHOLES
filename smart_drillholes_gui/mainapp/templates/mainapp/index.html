@@ -2,16 +2,18 @@
 {% block title %}SmartDHOLES{% endblock %}
 {% block content %}
 <div class="row">
-  <div class="mx-auto pt-3 px-3">
-  <h1>Wellcome to the Smart Drillholes GUI</h1>
-  <p class="lead">To start a new project click here:
-  <a href="{% url 'mainapp:new' %}" class="btn btn-primary">New Projects</a>
-  </p>
-  <p class="lead">Or open an existent database:
-  <a href="{% url 'mainapp:open' %}" class="btn btn-primary">Open Project</a>
-  </p>
+  <div class="mx-auto py-3 px-3">
+  <h1 class="mt-2 text-center">Wellcome to the Smart Drillholes GUI</h1>
+  <div class="text-center mt-3">
+  <h3 class="">Create a new database:<br />
+  <a href="{% url 'mainapp:new' %}" class="btn btn-outline-primary btn-lg mt-2">New database</a>
+  </h3>
+  <h3 class="">Or open an existent one:<br />
+  <a href="{% url 'mainapp:open' %}" class="btn btn-outline-primary btn-lg mt-2">Open database</a>
+  </h3>
+  </div>
   {% if request.session.engineURL %}
-  <div class="alert alert-warning">
+  <div class="alert alert-warning mt-3">
     There is already an open database: <a href="{% url 'mainapp:dashboard' %}">{{ request.session.engineURL }}</a><br/>
     <small>Open a new one or <a href="{% url 'mainapp:close_connection' %}">close</a> it</small>
   </div>
