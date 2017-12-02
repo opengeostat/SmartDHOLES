@@ -24,12 +24,25 @@
   <form action="." method="post" class="pb-2 clearfix">
 {% csrf_token %}
 <input type="hidden" name="tablename" value={{ table_key }}>
+<h6 class="text-muted"><strong>{{table_key}}</strong>
+  {% if table_key == "OG_SMDH_SYSTEM" %}<a style="outline: none;" data-toggle="collapse" href="#collapseOGInfo" aria-expanded="true" aria-controls="collapseOGInfo">
+    <span class="fa fa-info-circle text-warning"></span>
+  </a>{% endif %}</h6>
+<div class="d-flex align-content-center justify-content-start flex-wrap mb-2">
+    <div class="dataTables_filter form-inline my-1">
+        <input id="Custom_Table_filter" class="form-control form-control-sm" placeholder="Search" aria-controls="DB_Table" type="search">
+    </div>
+<div class="ml-auto my-1">
+  <div class="btn-group mr-2" role="group" aria-label="Basic example">
+    <a href="{% url 'mainapp:verify' table_key %}" class="btn btn-warning btn-sm"><span class="fa fa-bug"></span></a>
+  </div>
+  <div class="btn-group" role="group" aria-label="Basic example">
+    <a href="{% url 'mainapp:generic_add' table_key %}" class="btn btn-success btn-sm"><span class="fa fa-plus"></span></a>
+    <button type="button" class="delete_modal_btn btn btn-warning btn-sm"><span class="fa fa-trash"></span></button>
+  </div>
+</div>
+  </div>
   <div class="table-responsive">
-  <h6 class="text-muted mt-2 pull-left">smart drillholes table: <strong>{{table_key}}</strong>
-    {% if table_key == "OG_SMDH_SYSTEM" %}<a style="outline: none;" data-toggle="collapse" href="#collapseOGInfo" aria-expanded="true" aria-controls="collapseOGInfo">
-        <span class="fa fa-info-circle text-warning"></span>
-      </a>{% endif %}</h6>
-  <button type="button" class="delete_modal_btn btn btn-warning btn-sm pull-right my-2"><span class="fa fa-trash"></span></button>
   <table class="table table-sm table-bordered table-striped" id="DB_Table">
   <thead class="table-inverse">
   <tr>
@@ -73,13 +86,15 @@
   </tbody>
   </table>
   </div>
-  <div class="btn-group pull-right" role="group" aria-label="Basic example">
-    <a href="{% url 'mainapp:generic_add' table_key %}" class="btn btn-success btn-sm"><span class="fa fa-plus"></span></a>
-    <button type="button" class="delete_modal_btn btn btn-warning btn-sm"><span class="fa fa-trash"></span></button>
-</div>
-<div class="btn-group pull-right" role="group" aria-label="Basic example" style="margin-right:20px;">
-  <a href="{% url 'mainapp:verify' table_key %}" class="btn btn-warning btn-sm"><span class="fa fa-bug"></span></a>
-</div>
+  <div class="float-right my-1">
+    <div class="btn-group mr-2" role="group" aria-label="Basic example">
+      <a href="{% url 'mainapp:verify' table_key %}" class="btn btn-warning btn-sm"><span class="fa fa-bug"></span></a>
+    </div>
+    <div class="btn-group" role="group" aria-label="Basic example">
+      <a href="{% url 'mainapp:generic_add' table_key %}" class="btn btn-success btn-sm"><span class="fa fa-plus"></span></a>
+      <button type="button" class="delete_modal_btn btn btn-warning btn-sm"><span class="fa fa-trash"></span></button>
+    </div>
+  </div>
 {% include "mainapp/modal.html" %}
 </form>
 
@@ -113,14 +128,16 @@ $(".left-panel-droopdown").click(function(evento){
     $(this).attr('status','closed');
   }
 });
-$("#DB_Table").dataTable({
+dTable = $("#DB_Table").DataTable({
   paging:false,
   columnDefs: [
                 { orderable: false, targets: [-1, -2] }
               ],
 });
-$("#DB_Table_filter input").addClass("form-control form-control-sm mx-2");
-$("#DB_Table_filter").addClass("form-inline mt-2 clearfix float-right");
+$("#DB_Table_filter").remove();
+$('#Custom_Table_filter').keyup(function(){
+      dTable.search($(this).val()).draw() ;
+})
 // modal script
 $("button.delete_modal_btn").click(function(evento){
   evento.preventDefault();
