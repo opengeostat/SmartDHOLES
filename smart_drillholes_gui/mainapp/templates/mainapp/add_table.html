@@ -4,9 +4,8 @@
 {% block title %}SmartDHOLES|Add new table{% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="col-6 mx-auto" style="margin-top:20px;">
-    <div style="margin-top:20px;">
+  <div class="col-md-6 mx-auto mt-3">
+    <div style="mt-3">
       {% if messages %}
       {% for message in messages %}
       <div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
@@ -52,21 +51,30 @@
         </div>
       </div>
       {% endif %}
-
-      <div class="form-row well well-lg">
-        <div class="form-group col-md-7">
+      <div class="form-row">
+        <div class="form-group col-7">
           <label for="{{ form.name.id_for_label }}" class="col-form-label">{{ form.name.label }}</label>
+        </div>
+        <div class="form-group col-4">
+          <label for="{{ form.tb_type.id_for_label }}" class="col-form-label">{{ form.tb_type.label }}</label>
+        </div>
+        <div class="form-group col-1">
+          <label for="{{ form.nullable.id_for_label }}" class="col-form-label">{{ form.nullable.label }}</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-7">
           {{ form.name }}
         </div>
-        <div class="form-group col-md-4">
-          <label for="{{ form.tb_type.id_for_label }}" class="col-form-label">{{ form.tb_type.label }}</label>
+        <div class="form-group col-4">
           {{ form.tb_type }}
         </div>
 
-        <div class="form-group col-md-1 d-inline-flex flex-column p-2">
-          <label data-toggle="tooltip" data-placement="top" title="NULLABLE" for="id_form-__prefix__-nullable"
-           class="col-form-label text-center" style="padding-top:0px;"><strong>N:</strong></label>
-          {{ form.nullable }}
+        <div class="form-group col-1">
+          <label class="custom-control custom-checkbox">
+             {{ form.nullable }}
+            <span class="custom-control-indicator"></span>
+          </label>
         </div>
       </div>
     </div>
@@ -74,7 +82,7 @@
     </div>
 
 
-      <div class="form-row" style="margin-top:20px;margin-bottom:20px;">
+      <div class="form-row my-3">
         <div class="form-group col-md-6">
           <button class="btn btn-primary" id="add-column" type="button"><span class="fa fa-plus"></span></button>
           <button class="btn btn-primary" id="form-delete" type="button"><span class="fa fa-minus"></span></button>
@@ -90,17 +98,16 @@
 
     </form>
   </div>
-</div>
 
 <!-- the template -->
 <script type="text/html" id="form-template">
 	<div class="form-fieldset-__prefix__" style="display: none;">
     <div class="form-row well well-lg">
-      <div class="form-group col-md-7">
+      <div class="form-group col-7">
 
         <input pattern='[a-zA-Z0-9]+\w*[a-zA-Z0-9]+' onchange="myinput(this);" name="form-__prefix__-name" required="" placeholder="name" class="inp_name form-control" id="id_form-__prefix__-name" type="text">
       </div>
-      <div class="form-group col-md-4">
+      <div class="form-group col-4">
 
         <select name="form-__prefix__-tb_type" required="" class="form-control" id="id_form-__prefix__-tb_type">
           <option value="String">STRING</option>
@@ -108,10 +115,13 @@
           <option value="Integer">INTEGER</option>
         </select>
       </div>
-      <div class="form-group col-md-1 d-inline-flex flex-column p-2">
+      <div class="form-group col-1">
         <!-- <label data-toggle="tooltip" data-placement="top" title="NULLABLE" for="id_form-__prefix__-nullable" -->
          <!-- class="col-form-label text-center" style="padding-top:0px;"><strong>N:</strong></label> -->
-        <input name="form-__prefix__-nullable" style="margin-top:0px;" class="form-control align-self-center;" id="id_form-__prefix__-nullable" type="checkbox">
+         <label class="custom-control custom-checkbox">
+           <input name="form-__prefix__-nullable" class="custom-control-input" id="id_form-__prefix__-nullable" type="checkbox">
+           <span class="custom-control-indicator"></span>
+         </label>
       </div>
     </div>
 
