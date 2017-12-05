@@ -163,6 +163,7 @@ def index(request):
                       {'ref': 'index'})
     return response
 
+@login_required
 def open(request):
     db_type = 'sqlite'
     if request.method == "GET":
@@ -214,6 +215,7 @@ def open(request):
 
     return render(request,'mainapp/open.html',{'form': form, 'files_explorer': settings.files_explorer, 'directory_content': get_folder_content("/"),'db_type':db_type})
 
+@login_required
 def new(request):
     if request.method == "GET":
         form = NewForm()
@@ -312,6 +314,7 @@ def new(request):
             request.session['db_name'] = dbname_to_create
             return redirect('mainapp:dashboard')
 
+@login_required
 def dashboard(request):
     eng = request.session.get('engineURL')
     db_tp = request.session.get('db_type')
@@ -320,11 +323,12 @@ def dashboard(request):
         return redirect('mainapp:index')
     return render(request,'mainapp/dashboard.html', {'ref': 'dashboard'})
 
+@login_required
 def close_connection(request):
     connection_str(request, clean = True)
     return redirect('mainapp:index')
 
-#@csrf_exempt
+@login_required
 def reflector(request, table_key = ''):
     engineURL = request.session.get('engineURL')
     if not engineURL:
@@ -382,6 +386,7 @@ def reflector(request, table_key = ''):
 
     return render(request,'mainapp/reflector.html', {'tks': tks,'cols':cols,'data':data,'table_key':table_key})
 
+@login_required
 def add_table(request):
     if request.method in ['GET', 'POST']:
         RowFormset = formset_factory(FormTableColumn, extra=1, max_num=15)
@@ -504,6 +509,7 @@ def add_table(request):
             return render(request,'mainapp/add_table.html',{'form': form, 'formset':formset})
         return redirect('mainapp:reflector')
 
+@login_required
 def verify(request, table_key):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
@@ -519,6 +525,7 @@ def verify(request, table_key):
 
     return redirect(reverse('mainapp:reflector', kwargs={'table_key': table_key}))
 
+@login_required
 def get_collar_reference_tables_in_json(request):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
@@ -566,6 +573,7 @@ def signup_user(request):
                 'signup_form':signup_form,
                })
 
+@login_required
 def get_folder_content_in_json(request):
     if settings.files_explorer:
         content = get_folder_content(request.GET.get('path'))
@@ -590,6 +598,7 @@ def get_folder_content(path=None):
     return {"files":files,"folders":folders,"path":path,"previous_path":os.path.dirname(os.path.dirname(path))}
 
 #this function return reflector object of request engine
+@login_required
 def get_reflector(request):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)
