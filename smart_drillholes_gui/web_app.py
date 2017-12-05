@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # This code is a modification of the following code:
 # https://github.com/cztomczak/cefpython/edit/master/examples/qt.py
 
