@@ -26,7 +26,6 @@ if LINUX:
     # noinspection PyUnresolvedReferences
     CefWidgetParent = QX11EmbedContainer
 
-
 def main():
     check_versions()
     sys.excepthook = cef.ExceptHook  # To shutdown all CEF processes on error
@@ -66,6 +65,9 @@ class MainWindow(QMainWindow):
         self.resize(WIDTH, HEIGHT)
         self.cef_widget = CefWidget(self)
         layout = QGridLayout()
+        self.Menu = self.menuBar().addMenu("&Actions")
+        self.Menu.addAction("New", self.New)
+        self.Menu.addAction("Open", self.Open)
         # noinspection PyArgumentList
         layout.addWidget(self.cef_widget, 1, 0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -85,6 +87,12 @@ class MainWindow(QMainWindow):
         if self.cef_widget.browser:
             self.cef_widget.browser.CloseBrowser(True)
             self.clear_browser_references()
+
+    def New(self):
+        self.cef_widget.browser.LoadUrl("http://localhost:8000/new/")
+
+    def Open(self):
+        self.cef_widget.browser.LoadUrl("http://localhost:8000/open/")
 
     def clear_browser_references(self):
         # Clear browser references that you keep anywhere in your
