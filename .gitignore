@@ -26,5 +26,7 @@
 #database files
 *.sqlite
 *.sqlite3
+
+*.log
 /migrations/
 !/migrations/__init__.py
