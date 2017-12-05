@@ -59,7 +59,7 @@
           <label for="{{ form.tb_type.id_for_label }}" class="col-form-label">{{ form.tb_type.label }}</label>
         </div>
         <div class="form-group col-1">
-          <label for="{{ form.nullable.id_for_label }}" class="col-form-label">{{ form.nullable.label }}</label>
+          <label for="{{ form.nullable.id_for_label }}" class="col-form-label text-center">{{ form.nullable.label }}</label>
         </div>
       </div>
       <div class="form-row">
@@ -71,9 +71,9 @@
         </div>
 
         <div class="form-group col-1">
-          <label class="custom-control custom-checkbox">
+            <label class="custom-control custom-checkbox">
              {{ form.nullable }}
-            <span class="custom-control-indicator"></span>
+            <span class="custom-control-indicator mt-1"></span>
           </label>
         </div>
       </div>
@@ -116,11 +116,9 @@
         </select>
       </div>
       <div class="form-group col-1">
-        <!-- <label data-toggle="tooltip" data-placement="top" title="NULLABLE" for="id_form-__prefix__-nullable" -->
-         <!-- class="col-form-label text-center" style="padding-top:0px;"><strong>N:</strong></label> -->
          <label class="custom-control custom-checkbox">
-           <input name="form-__prefix__-nullable" class="custom-control-input" id="id_form-__prefix__-nullable" type="checkbox">
-           <span class="custom-control-indicator"></span>
+           <input name="form-__prefix__-nullable" class="custom-control-input d-none" id="id_form-__prefix__-nullable" type="checkbox">
+           <span class="custom-control-indicator mt-1"></span>
          </label>
       </div>
     </div>

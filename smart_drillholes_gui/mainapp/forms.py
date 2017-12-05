@@ -139,4 +139,4 @@ class FormTableColumn(forms.Form):
                                 label="Column Type:"
                                 )
 
-    nullable = forms.BooleanField(required=False ,widget=forms.CheckboxInput(attrs={'class':'custom-control-input'}))
+    nullable = forms.BooleanField(required=False ,widget=forms.CheckboxInput(attrs={'class':'custom-control-input d-none'}), label="Null:")
