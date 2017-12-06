@@ -52,7 +52,7 @@
       {% endwith %}
     </nav>
 
-    <div class="container-fluid" id="page-content">
+    <div class="container-fluid {% if request.session.desktop %}full-height-body{% endif %}" id="page-content">
       {% block content %}
       {% endblock %}
 

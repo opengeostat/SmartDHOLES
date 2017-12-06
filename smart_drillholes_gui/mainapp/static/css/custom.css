@@ -17,8 +17,19 @@
 #left-panel-tables{
     background: #f5f5f5;
 }
-#left-panel, #page-content{
+#page-content{
     min-height: calc(100vh - 19.9rem);
+}
+#page-content.full-height-body{
+  min-height: calc(100vh - 5rem)!important;
+}
+@media screen and (min-width: 768px) {
+  #left-panel{
+      min-height: calc(100vh - 19.9rem);
+  }
+  #left-panel.full-height-panel{
+      min-height: calc(100vh - 3.5rem)!important;
+  }
 }
 #page-footer{
   border-top:1px solid #eee;
