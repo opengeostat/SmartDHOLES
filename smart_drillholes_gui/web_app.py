@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # This code is a modification of the following code:
 # https://github.com/cztomczak/cefpython/edit/master/examples/qt.py
-
+import subprocess
 from cefpython3 import cefpython as cef
 import ctypes
 import os
@@ -66,9 +66,19 @@ class MainWindow(QMainWindow):
         self.resize(WIDTH, HEIGHT)
         self.cef_widget = CefWidget(self)
         layout = QGridLayout()
-        self.Menu = self.menuBar().addMenu("&Actions")
-        self.Menu.addAction("New", self.New)
-        self.Menu.addAction("Open", self.Open)
+        self.ActionsMenu = self.menuBar().addMenu("&Actions")
+        self.AboutMenu = self.menuBar().addMenu("&About")
+        self.ActionsMenu.addAction("New", self.New)
+        self.ActionsMenu.addAction("Open", self.Open)
+        self.AboutMenu.addAction("About", self.open_opengeostat_about)
+        self.AboutMenu.addAction("OpenGeostat Website", self.open_opengeostat)
+        self.AboutMenu.addAction("Contact", self.open_opengeostat_contact)
+        self.AboutMenu.addAction("Facebok", self.open_facebook)
+        self.AboutMenu.addAction("Twitter", self.open_twitter)
+        self.AboutMenu.addAction("Google +", self.open_googleplus)
+        self.AboutMenu.addAction("Youtube", self.open_youtube)
+        self.AboutMenu.addAction("Linkedin", self.open_linkedin)
+        self.AboutMenu.addAction("Github", self.open_github)
         # noinspection PyArgumentList
         layout.addWidget(self.cef_widget, 1, 0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -88,6 +98,30 @@ class MainWindow(QMainWindow):
         if self.cef_widget.browser:
             self.cef_widget.browser.CloseBrowser(True)
             self.clear_browser_references()
+    def open_external(self, link):
+        if LINUX:
+            with open(os.devnull, 'r+b', 0) as DEVNULL:
+                p = subprocess.Popen(['xdg-open', link],
+                      stdin=DEVNULL, stdout=DEVNULL, close_fds=True)
+
+    def open_opengeostat(self):
+        self.open_external("http://opengeostat.com/")
+    def open_github(self):
+        self.open_external("https://github.com/opengeostat/")
+    def open_opengeostat_about(self):
+        self.open_external("http://opengeostat.com/about-opengeostat/")
+    def open_linkedin(self):
+        self.open_external("https://www.linkedin.com/company/opengeostat")
+    def open_facebook(self):
+        self.open_external("https://www.facebook.com/opengeostat/")
+    def open_youtube(self):
+        self.open_external("https://www.youtube.com/channel/UCfo5QsMbHGgKW5lxsbWxvHg")
+    def open_twitter(self):
+        self.open_external("https://twitter.com/OpenGeostat")
+    def open_googleplus (self):
+        self.open_external("https://plus.google.com/+Opengeostat")
+    def open_opengeostat_contact(self):
+        self.open_external("http://opengeostat.com/contact/")
 
     def New(self):
         self.cef_widget.browser.LoadUrl("http://localhost:8000/new/")
@@ -129,7 +163,7 @@ class CefWidget(CefWidgetParent):
         rect = [0, 0, self.width(), self.height()]
         window_info.SetAsChild(self.getHandle(), rect)
         self.browser = cef.CreateBrowserSync(window_info,
-                                             url="http://localhost:8000/")
+                                             url="http://localhost:8000/desktop/") # open the desktop version
         self.browser.SetClientHandler(FocusHandler(self))
 
     def getHandle(self):
