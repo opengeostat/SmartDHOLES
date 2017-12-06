@@ -163,6 +163,10 @@ def index(request):
                       {'ref': 'index'})
     return response
 
+# Usefull for separating things between desktop and web
+def desktop(request):
+    request.session['desktop'] = True
+    return redirect("mainapp:index")
 @login_required
 def open(request):
     db_type = 'sqlite'

@@ -57,7 +57,9 @@
       {% endblock %}
 
     </div>
+    {% if not request.session.desktop %}
     {% include "mainapp/footer.html" %}
+    {% endif %}
     <!-- /.container -->
     <script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
     <script src="{% static 'js/popper.min.js' %}"></script>
