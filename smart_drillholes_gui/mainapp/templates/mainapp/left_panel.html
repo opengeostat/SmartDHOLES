@@ -13,6 +13,7 @@
           {% endfor %}
         </ul>
         <li class="nav-item"><a class="nav-link text-dark" href="{% url 'mainapp:add_table' %}"><i style="color:green;" class="fa fa-plus-square-o"></i> Add Table<i class="float-right"></i></a></li>
-        <li class="nav-item"><a class="nav-link text-dark" href="#"><i style="color:red;" class="fa fa-minus-square-o"></i> Remove Table<i class="float-right"></i></a></li>
+        <li class="nav-item"><a class="delete_tblmodal_btn nav-link text-dark" href="#"><i style="color:red;" class="fa fa-minus-square-o"></i> Remove Table<i class="float-right"></i></a></li>
       </ul>
+      {% include "mainapp/modal_tbl_del.html" %}
 </div>

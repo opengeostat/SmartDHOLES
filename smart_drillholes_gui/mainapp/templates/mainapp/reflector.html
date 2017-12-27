@@ -5,6 +5,7 @@
 <div class="row flex-xl-nowrap row-eq-height">
 
 {% include "mainapp/left_panel.html" %}
+
 <div class="col-12 col-md-9 col-xl-10">
 {% if table_key == "OG_SMDH_SYSTEM" %}
 {% include "mainapp/OG_SMDH_SYSTEMinfo.html" %}
@@ -80,7 +81,7 @@
 <div class="btn-group pull-right" role="group" aria-label="Basic example" style="margin-right:20px;">
   <a href="{% url 'mainapp:verify' table_key %}" class="btn btn-warning btn-sm"><span class="fa fa-bug"></span></a>
 </div>
-{% include "mainapp/modal.html" %}
+{% include "mainapp/modal_item_del.html" %}
 </form>
 
 </div>
@@ -124,7 +125,6 @@ $("#DB_Table_filter").addClass("form-inline mt-2 clearfix float-right");
 // modal script
 $("button.delete_modal_btn").click(function(evento){
   evento.preventDefault();
-
   var nombres = [];
   $("input[type=checkbox]:checked").each(
       function ()
@@ -134,9 +134,76 @@ $("button.delete_modal_btn").click(function(evento){
   if (nombres != "") {
     $('#deleteModal').modal();
   }
-
 });
 
+//enable okbutton to delete a table
+$("input#okinput").change(function(){
+  value = $(this).val();
+  okbtn = $("button#okbutton");
+  if(value == "OK"){
+    okbtn.prop('disabled', false);
+  }
+  else{
+    okbtn.prop('disabled', true);
+  }
+
+}
+);
+
+// delete table modal script
+$("a.delete_tblmodal_btn").click(function(evento){
+  evento.preventDefault();
+  $("#loadding").css("display", "inline");
+  parent = $("div#tb_depend ul#depend");
+  parent.empty();
+
+  $.ajax({
+    method: "GET",
+    url: '{% url "mainapp:test_json" %}',
+    data: {'tk': "{{table_key}}",},
+    dataType: 'json',
+    success: function(data) {
+      $("#loadding").css("display", "none");
+      if (data.content){
+        // Object.keys(data.content.{{table_key}})
+        // Object.getOwnPropertyNames(data.content.{{table_key}})
+            $.each(data.content, function( index, value ) {
+              // alert( index + ": " + value );
+              if(value == "null"){
+                content = "<li class='list-group-item default text-danger'>"+index+"</li>";
+                parent.append(content);
+              }
+              else{
+                content = "<li style='padding-left:10px;' class='list-group-item default text-danger'><span class='fa fa-caret-down'></span> "+index+"</li>";
+                parent.append(content);
+                $("div#chdr").html(index);
+                padding = 10;
+
+                recursive(value,parent,padding);
+              }
+            });
+      }
+    }
+  });
+  $("input#okinput").prop("value","");
+    $('#delete_tblModal').modal();
 });
+});
+
+function recursive(item,parent,padding){
+  padding = padding+20;
+  $.each(item, function( index, value ) {
+    if(value == "null"){
+      content = "<li style='padding-left:"+padding+"px;' class='list-group-item'><span class='fa fa-caret-right'></span> "+index+"</li>";
+      parent.append(content);
+    }
+    else{
+      content = "<li style='padding-left:"+padding+"px;' class='list-group-item'><span class='fa fa-caret-down'></span> "+index+"</li>";
+      parent.append(content);
+      recursive(value,parent, padding);
+    }
+});
+}
+
 </script>
 {% endblock javascript %}

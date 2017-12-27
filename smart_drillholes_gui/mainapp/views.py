@@ -1,21 +1,29 @@
 # -*- coding: utf-8 -*-
 
-from __future__                     import unicode_literals
-from .forms                         import OpenSQliteForm, OpenPostgresForm, NewForm, AddTableForm,MyModelForm, AppUserForm, GenericModelForm, FormTableColumn
-from sqlalchemy.ext.declarative     import declarative_base
-from sqlalchemy                     import String, Float, Integer, exc #(exc: Exceptions)
-from reflector.og_reflector         import Reflector
-from reflector.util                 import create_model, defineObject, update, pg_create, fields_generator, connection_str, tb_data
-from reflector.bugs                 import check_bugs
-from smart_drillholes_gui           import settings
-from smart_drillholes.core          import *
-from django.contrib.auth.decorators import login_required
-from django.shortcuts               import render, redirect
-from django.http                    import JsonResponse, Http404
-from django.contrib                 import messages
-from django.forms                   import ModelForm, formset_factory
-from django                         import forms
-from django.urls                    import reverse
+from __future__                                   import unicode_literals
+from .forms                                       import (OpenSQliteForm, OpenPostgresForm,
+                                                         NewForm, AddTableForm,MyModelForm,
+                                                         AppUserForm, GenericModelForm,
+                                                         FormTableColumn)
+from sqlalchemy.schema                            import ForeignKeyConstraint, DropConstraint
+from sqlalchemy.ext.declarative                   import declarative_base
+from sqlalchemy                                   import String, Float, Integer, exc #(exc: Exceptions)
+from smart_drillholes.reflector.og_reflector      import Reflector
+from smart_drillholes.reflector.util              import (create_model, defineObject,
+                                                          update, pg_create, fields_generator,
+                                                          connection_str, tb_data,
+                                                          adapt_postgresToSqlite, removeOnCascade,
+                                                          depend)
+from smart_drillholes.reflector.bugs              import check_bugs
+from smart_drillholes_gui                         import settings
+from smart_drillholes.core                        import *
+from django.contrib.auth.decorators               import login_required
+from django.shortcuts                             import render, redirect
+from django.http                                  import JsonResponse, Http404
+from django.contrib                               import messages
+from django.forms                                 import ModelForm, formset_factory
+from django                                       import forms
+from django.urls                                  import reverse
 import datetime
 import os
 import re
@@ -124,8 +132,6 @@ def generic_add(request, table_key, oid = None):
             return render(request,'mainapp/row_add.html',{'form': form, 'table_key':table_key,'action':action})
 
     elif oid != None and request.method == "GET":
-        # form = MyGenericModelForm()
-        # return render(request,'mainapp/test.html',{'data': oid})
         pks = oid.split(',')
         Base = declarative_base()
         object_table = type(str(table_key), (Base,), defineObject(table))
@@ -269,12 +275,12 @@ def new(request):
             og_add_interval(eng, meta, table_name='assay', cols={'SampleID': {'coltypes': String,
                                                                               'nullable': False,
                                                                               'foreignkey': {'column': 'assay_certificate.SampleID',
-                                                                                             'ondelete': 'RESTRICT',
+                                                                                             'ondelete': 'CASCADE',
                                                                                              'onupdate': 'CASCADE'}}})
             og_add_interval(eng, meta, table_name='litho', cols={'RockID':{'coltypes': String,
                                                                            'nullable': True,
                                                                            'foreignkey': {'column': 'rock_catalog.RockID',
-                                                                                          'ondelete': 'RESTRICT',
+                                                                                          'ondelete': 'CASCADE',
                                                                                           'onupdate': 'CASCADE'}}})
 
             execute(eng, meta)
@@ -440,13 +446,14 @@ def add_table(request):
             elif table_type == 'assay' or table_type == 'litho':
                 # on this tables, collar foreignkey: collar.BHID
                 table_reference = request.POST.get('table_reference')
+                raise Error
                 for column in meta.tables[table_reference].columns:
                     if column.primary_key:
                         pk = column.key
                 cols = {pk:{'coltypes': String,
                                 'nullable': False,
                                 'foreignkey': {'column': '{}.{}'.format(table_reference, pk),
-                                            'ondelete': 'RESTRICT',
+                                            'ondelete': 'CASCADE',
                                             'onupdate': 'CASCADE'}}}
                 cols.update(formset_cols)
                 og_add_interval(eng, meta, table_name=table_name, cols=cols)
@@ -454,6 +461,7 @@ def add_table(request):
             elif table_type == 'other_interval':
                 # on this tables, collar foreignkey: dbsuffix+_collar.BHID
                 collar_reference = request.POST.get('collar_reference')
+                raise Error
                 if collar_reference and collar_reference.endswith('_collar'):
                     m = re.search("_collar", collar_reference)
                     dbsuffix = collar_reference[:m.start()]
@@ -464,7 +472,11 @@ def add_table(request):
                 for column in meta.tables[table_reference].columns:
                     if column.primary_key:
                         pk = column.key
-                cols = {pk: {'coltypes': String,'nullable': False,'foreignkey': {'column': '{}.{}'.format(table_reference, pk),'ondelete': 'RESTRICT','onupdate': 'CASCADE'}}}
+                cols = {pk: {'coltypes': String,
+                            'nullable': False,
+                            'foreignkey': {'column': '{}.{}'.format(table_reference, pk),
+                                            'ondelete': 'CASCADE',
+                                            'onupdate': 'CASCADE'}}}
                 cols.update(formset_cols)
                 og_add_interval(eng, meta, table_name=table_name, cols=cols, dbsuffix = dbsuffix)
             try:
@@ -503,6 +515,30 @@ def add_table(request):
         else:
             return render(request,'mainapp/add_table.html',{'form': form, 'formset':formset})
         return redirect('mainapp:reflector')
+
+from sqlalchemy.schema                            import DropTable, DropConstraint
+from sqlalchemy.ext.compiler                      import compiles
+
+@compiles(DropTable, "postgresql")
+def _compile_drop_table(element, compiler, **kwargs):
+    return compiler.visit_drop_table(element) + " CASCADE"
+
+
+def remove_table(request):
+    engineURL = request.session.get('engineURL')
+    reflector = Reflector(engineURL)
+    reflector.reflectTables()
+    meta = reflector.get_metadata()
+
+    if request.method == 'POST':
+        tbl = request.POST.get('tbl')
+        db_type = request.session.get('db_type')
+        removeOnCascade(db_type, reflector,tbl)
+
+        reflector.reflectTables()
+        meta = reflector.get_metadata()
+
+    return redirect('mainapp:reflector')
 
 def verify(request, table_key):
     engineURL = request.session.get('engineURL')
@@ -595,3 +631,41 @@ def get_reflector(request):
     reflector = Reflector(engineURL)
     reflector.reflectTables()
     return reflector
+
+# ---------------------------------------------------------
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
+# Adapt postgres DOUBLE_PRECISION type to sqlite FLOAT type
+@compiles(DOUBLE_PRECISION, 'sqlite')
+def compile_DOUBLE_PRECISION_postgresql_sqlite(element, compiler, **kw):
+    """ Handles postgresql DOUBLE_PRECISION datatype as FLOAT in sqlite """
+    res = compiler.visit_FLOAT(element, **kw)
+    return res
+
+def postgres_to_sqlite(request):
+    engineURL = request.session.get('engineURL')
+    db_name = request.session.get('db_name')
+    db_type = request.session.get('db_type')
+    str_sqlite_meta = 'sqlite:////home/leudis/Desktop/{}.sqlite'.format(db_name)
+    adapted = False
+    if db_type == 'postgresql':
+        adapted = adapt_postgresToSqlite(engineURL,str_sqlite_meta)
+    if adapted:
+        msg = "The '{}' postgres database was succefull adapted to sqlite, enjoy this.".format(db_name)
+        messages.add_message(request, messages.SUCCESS, msg)
+    else:
+        msg = "The '{}' database was not succefull adapted.".format(db_name)
+        messages.add_message(request, messages.WARNING, msg)
+
+    return redirect(reverse('mainapp:dashboard'))
+
+def test_json(request):
+    engineURL = request.session.get('engineURL')
+    table_key = request.GET.get("tk")
+    reflector = Reflector(engineURL)
+    db_type = request.session.get('db_type')
+    content = depend(db_type,reflector,table_key)
+    # content = depend(db_type,reflector,"collar")
+    # content = {'hola':{"lolo":{"lola":"null"}}}
+    return JsonResponse({'content': content})
+    # return render(request,'mainapp/test.html',{'data': content})

@@ -4,6 +4,18 @@
 
 {% block content %}
 <div class="col-md-8 mx-auto pt-3">
+
+  <div style="margin-top:20px;">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'success'%} alert-success {% elif message.tags == 'warning' %} alert-warning {% elif message.tags == 'info' %} alert-info {% endif %} alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
 <div class="card">
   <div class="card-header">
     <h3 class="card-title">{{ request.session.db_name }} <small class="text-muted float-right">{{ request.session.db_type }}</small></h3>
@@ -14,7 +26,9 @@
       <a href="#"><span class="fa fa-calculator text-dark"></span> Estimate</a>
     </div>
     <div class="col-6">
-      <a href="{% url 'mainapp:close_connection' %}">Connection Close</a><br />
+      <a href="{% url 'mainapp:postgres_sqlite' %}"><span class="fa fa-database text-dark"></span><span class="fa fa-arrows-h text-dark"></span><span class="fa fa-database text-secondary"></span> Database Adapt</a><br />
+      <a href="{% url 'mainapp:close_connection' %}"><span class="fa fa-database text-dark"></span><span class="fa fa-arrows-h text-dark"></span><span class="fa fa-database text-dark"></span> Database Full Adapt</a><br />
+      <a href="{% url 'mainapp:close_connection' %}"><span class="fa fa-unlink text-danger"></span> Connection Close</a>
     </div>
   </div>
 </div>
