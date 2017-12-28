@@ -25,6 +25,8 @@ from django.forms                                 import ModelForm, formset_fact
 from django                                       import forms
 from django.urls                                  import reverse
 import datetime
+from sqlalchemy.schema                            import DropTable, DropConstraint
+from sqlalchemy.ext.compiler                      import compiles
 import os
 import re
 
@@ -527,6 +529,27 @@ def add_table(request):
 
 
 @login_required
+@compiles(DropTable, "postgresql")
+def _compile_drop_table(element, compiler, **kwargs):
+    return compiler.visit_drop_table(element) + " CASCADE"
+
+@login_required
+def remove_table(request):
+    engineURL = request.session.get('engineURL')
+    reflector = Reflector(engineURL)
+    reflector.reflectTables()
+    meta = reflector.get_metadata()
+
+    if request.method == 'POST':
+        tbl = request.POST.get('tbl')
+        db_type = request.session.get('db_type')
+        removeOnCascade(db_type, reflector,tbl)
+
+        reflector.reflectTables()
+        meta = reflector.get_metadata()
+
+    return redirect('mainapp:reflector')
+
 def verify(request, table_key):
     engineURL = request.session.get('engineURL')
     reflector = Reflector(engineURL)

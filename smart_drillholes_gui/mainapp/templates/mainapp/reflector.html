@@ -87,18 +87,6 @@
   </tbody>
   </table>
   </div>
-<<<<<<< HEAD
-  <div class="float-right my-1">
-    <div class="btn-group mr-2" role="group" aria-label="Basic example">
-      <a href="{% url 'mainapp:verify' table_key %}" class="btn btn-warning btn-sm"><span class="fa fa-bug"></span></a>
-    </div>
-    <div class="btn-group" role="group" aria-label="Basic example">
-      <a href="{% url 'mainapp:generic_add' table_key %}" class="btn btn-success btn-sm"><span class="fa fa-plus"></span></a>
-      <button type="button" class="delete_modal_btn btn btn-warning btn-sm"><span class="fa fa-trash"></span></button>
-    </div>
-  </div>
-{% include "mainapp/modal.html" %}
-=======
   <div class="btn-group pull-right" role="group" aria-label="Basic example">
     <a href="{% url 'mainapp:generic_add' table_key %}" class="btn btn-success btn-sm"><span class="fa fa-plus"></span></a>
     <button type="button" class="delete_modal_btn btn btn-warning btn-sm"><span class="fa fa-trash"></span></button>
@@ -107,7 +95,6 @@
   <a href="{% url 'mainapp:verify' table_key %}" class="btn btn-warning btn-sm"><span class="fa fa-bug"></span></a>
 </div>
 {% include "mainapp/modal_item_del.html" %}
->>>>>>> smart-012
 </form>
 
 </div>
@@ -165,10 +152,10 @@ $("button.delete_modal_btn").click(function(evento){
 });
 
 //enable okbutton to delete a table
-$("input#okinput").change(function(){
+$("input#okinput").keyup(function(){
   value = $(this).val();
   okbtn = $("button#okbutton");
-  if(value == "OK"){
+  if(value.toUpperCase() == "OK"){
     okbtn.prop('disabled', false);
   }
   else{
