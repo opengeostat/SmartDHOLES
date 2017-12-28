@@ -67,6 +67,9 @@ class Reflector():
     def get_pure_tables(self):
         return self.pure_tables
 
+    def get_pure_table(self,name):
+        self.metadata.tables[name]
+
     def get_metadata(self):
         return self.metadata
 

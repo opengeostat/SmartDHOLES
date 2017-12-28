@@ -2,6 +2,7 @@
 {% block title %}SmartDHOLES{% endblock %}
 {% block content %}
 <div class="row">
+<<<<<<< HEAD
   <div class="mx-auto py-3 px-3">
   <h1 class="mt-2 text-center">Wellcome to the Smart Drillholes GUI</h1>
   <div class="text-center mt-3">
@@ -12,6 +13,31 @@
   <a href="{% url 'mainapp:open' %}" class="btn btn-outline-primary btn-lg mt-2">Open database</a>
   </h3>
   </div>
+=======
+  <div class="mx-auto pt-3">
+    <h1>Wellcome to the Smart Drillholes GUI</h1>
+  </div>
+</div>
+<div class="d-flex flex-row pt-3 justify-content-center ">
+  <div class="card border-secondary mb-3 text-center mr-2" style="max-width: 20rem;">
+    <div class="card-body text-secondary">
+      <h4 class="card-title">New Project</h4>
+      <p class="card-text">To start a new project click here:</p>
+      <a href="{% url 'mainapp:new' %}" class="btn btn-primary btn-block">New</a>
+    </div>
+  </div>
+
+  <div class="card border-secondary mb-3 text-center ml-2" style="max-width: 20rem;">
+    <div class="card-body text-secondary">
+      <h4 class="card-title">Open Project</h4>
+      <p class="card-text">To open an database click here:</p>
+      <a href="{% url 'mainapp:open' %}" class="btn btn-primary btn-block">Open</a>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="mx-auto pt-3">
+>>>>>>> smart-012
   {% if request.session.engineURL %}
   <div class="alert alert-warning mt-3">
     There is already an open database: <a href="{% url 'mainapp:dashboard' %}">{{ request.session.engineURL }}</a><br/>

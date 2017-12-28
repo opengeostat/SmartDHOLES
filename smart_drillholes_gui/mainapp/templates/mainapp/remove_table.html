@@ -1,0 +1,35 @@
+{% extends "mainapp/base.html" %}
+{% load static %}
+{% block title %}SmartDHOLES|Add new table{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="col-6 mx-auto" style="margin-top:20px;">
+
+    <form method="POST" action=".">
+      {% csrf_token %}
+
+      {# columns formset #}
+      {{ formset.management_form }}
+      <div id="form-container">
+      {% for table in db_tables %}
+
+      <p>{{ table }}</p>
+
+    {% endfor %}
+  </div>
+
+      <div class="form-row" style="margin-top:20px;margin-bottom:20px;">
+
+        <div class="form-group col-md-6">
+          <div class="float-right">
+            <a href="{% url 'mainapp:reflector' %}" class="btn btn-danger">Cancel</a>
+            <button type="submit" class="btn btn-success">Create</button>
+          </div>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

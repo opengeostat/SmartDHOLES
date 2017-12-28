@@ -52,3 +52,15 @@
 .path:hover,.path:focus{
   background: rgba(0,0,0,0.05);
 }
+
+ul#depend li.list-group-item:first-child{
+  border: solid 4px red;
+}
+
+ul#depend li.list-group-item{
+  border-radius: 0rem;
+  border-radius: 0rem;
+  border: solid 0px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}

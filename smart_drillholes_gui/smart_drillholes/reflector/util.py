@@ -2,7 +2,8 @@
 
 import re
 from django.db                  import models
-from sqlalchemy                 import Column, create_engine, exc
+from sqlalchemy                 import MetaData, Column, create_engine, exc
+from sqlalchemy.engine          import reflection
 from error                      import EmptyError
 from django.core.validators     import RegexValidator
 
@@ -14,6 +15,8 @@ from django.core.validators     import RegexValidator
 #-6-reflect
 #-7-connection_str
 #-8-tb_data
+#-9-adapt_postgresToSqlite
+#-10-removeOnCascade
 
 #-1------------------Dinamic Model------------------------#
 def create_model(name, attrs={}, meta_attrs={}, module_path='django.db.models'):
@@ -268,3 +271,125 @@ def tb_data(reflector, table_key = '', session = None):
         session.close()
         del reflector
     return dat
+
+#-9----------------------------------------------------------#
+#this function adapt postgres database to sqlite database
+def adapt_postgresToSqlite(str_postgres_meta, str_sqlite_meta):
+    #'postgres://postgres:password@localhost/test'
+    str_postgres = str_postgres_meta
+    str_sqlite = str_sqlite_meta
+
+    try:
+        dbengine = create_engine(str_postgres)
+        meta_postgres = MetaData(bind=dbengine, reflect=True)
+
+        #meta_postgres = MetaData(str_postgres_meta,reflect=True)
+        meta_sqlite = MetaData(str_sqlite_meta)
+        for table in meta_postgres.sorted_tables:
+            table.tometadata(meta_sqlite)
+        meta_sqlite.create_all()
+        return True
+    except:
+        return False
+
+
+#-10----------------------------------------------------------#
+#this function drop database table on cascade
+def removeOnCascade(db_type, reflector, tbl):
+    reflector.reflectTables()
+    meta = reflector.get_metadata()
+    engine = reflector.get_engine()
+    #sqlite
+    table_drop = tbl
+    if db_type == "sqlite":
+        remove_table(meta, engine, table_drop)
+    #postgres
+    elif db_type == "postgresql":
+        sql= str("select r.relname"
+        +" FROM pg_stat_user_tables r, pg_constraint c, pg_stat_user_tables s"
+        +" WHERE s.relid = c.confrelid AND c.conrelid = r.relid AND"
+        +" s.relname = '%s'")%table_drop
+        execute = engine.execute
+        try:
+            result = [name for (name, ) in execute(sql)]
+        except:
+            raise
+        tableList = []
+        for tb_name in result:
+            tableList.append(meta.tables[tb_name])
+        table = meta.tables[table_drop]
+        table.drop(checkfirst=True)
+        meta.drop_all(tables=tableList, checkfirst=True)
+
+def remove_table(meta, engine, table_drop):
+    inspector = reflection.Inspector.from_engine(engine)
+    table_names = inspector.get_table_names()
+    table_names.remove(table_drop)
+
+    tables_drop = []
+    for table_name in table_names:
+        fks = inspector.get_foreign_keys(table_name)
+        referred_tables = [fk['referred_table'] for fk in fks]
+        if table_drop in referred_tables:
+            tables_drop.append(table_name)
+    if tables_drop == []:
+        table = meta.tables[table_drop]
+        table.drop(checkfirst=True)
+    else:
+        for tb in tables_drop:
+            remove_table(meta, engine, tb)
+        table = meta.tables[table_drop]
+        table.drop(checkfirst=True)
+
+#-11----------------------------------------------------------#
+def depend(db_type, reflector, tbl, dep = None):
+    if dep == None : dep = {}
+    reflector.reflectTables()
+    meta = reflector.get_metadata()
+    engine = reflector.get_engine()
+    table_dep = tbl
+
+    #sqlite
+    if db_type == "sqlite":
+        dep = dep_sqlite(engine, table_dep)
+        if dep == "null":
+            dep = {table_dep:"null"}
+    #postgres
+    elif db_type == "postgresql":
+        sql= str("select r.relname"
+        +" FROM pg_stat_user_tables r, pg_constraint c, pg_stat_user_tables s"
+        +" WHERE s.relid = c.confrelid AND c.conrelid = r.relid AND"
+        +" s.relname = '%s'")%table_dep
+        execute = engine.execute
+        try:
+            tables = {name:"null" for (name, ) in execute(sql)}
+            # return tables
+        except:
+            raise
+        if tables != {}:
+
+            dep[table_dep] = tables
+            #return dep
+            for tb in tables.keys():
+                depend(db_type,reflector,tb, tables)
+            return dep
+        else:
+            dep[table_dep] = "null"
+    return dep
+
+def dep_sqlite(engine, table_dep, dep = None):
+    if dep == None : dep = {}
+    inspector = reflection.Inspector.from_engine(engine)
+    table_names = inspector.get_table_names()
+    table_names.remove(table_dep)
+    tables_dep = []
+    for table_name in table_names:
+        fks = inspector.get_foreign_keys(table_name)
+        referred_tables = [fk['referred_table'] for fk in fks]
+        if table_dep in referred_tables:
+            tables_dep.append(table_name)
+    if tables_dep == []:
+        return "null"
+    else:
+        dep[table_dep] = {tb:dep_sqlite(engine, tb) for tb in tables_dep}
+        return dep
