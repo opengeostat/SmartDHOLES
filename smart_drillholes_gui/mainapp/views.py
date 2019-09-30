@@ -462,7 +462,6 @@ def add_table(request):
             elif table_type == 'assay' or table_type == 'litho':
                 # on this tables, collar foreignkey: collar.BHID
                 table_reference = request.POST.get('table_reference')
-                raise Error
                 for column in meta.tables[table_reference].columns:
                     if column.primary_key:
                         pk = column.key
@@ -477,7 +476,6 @@ def add_table(request):
             elif table_type == 'other_interval':
                 # on this tables, collar foreignkey: dbsuffix+_collar.BHID
                 collar_reference = request.POST.get('collar_reference')
-                raise Error
                 if collar_reference and collar_reference.endswith('_collar'):
                     m = re.search("_collar", collar_reference)
                     dbsuffix = collar_reference[:m.start()]
